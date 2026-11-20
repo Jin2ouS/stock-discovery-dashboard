@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SignalStock - 구글 시트 연동 주식 발굴 & 모니터링 대시보드</title>
+  <title>SignalStock - 구글 시트 연동 주식 발굴 & 타점 모니터링 대시보드</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- TradingView Library -->
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
@@ -31,7 +29,7 @@
           <span class="font-extrabold text-base tracking-tight text-white">SignalStock</span>
           <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">100% Serverless</span>
         </div>
-        <p class="text-xs text-slate-400">구글 시트 연동 · 실시간 차트 · 종목 발굴 올인원 대시보드</p>
+        <p class="text-xs text-slate-400">구글 시트 연동 · 실시간 캔들 차트 · 종목 발굴 올인원 대시보드</p>
       </div>
 
       <!-- Navigation Tabs -->
@@ -187,29 +185,36 @@
           <!-- Chart Control Bar & Mode Switcher -->
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-bold text-slate-400">차트 모드:</span>
+              <span class="text-xs font-bold text-slate-400">차트 뷰:</span>
               <div class="flex bg-[#1e293b] p-0.5 rounded-lg border border-[#334155] text-xs">
-                <button id="chartModeLiveBtn" onclick="setChartEngine('live')" class="px-2.5 py-1 rounded bg-amber-500 text-black font-bold flex items-center gap-1">
-                  <span>📈 실시간 실제 캔들 차트</span>
+                <button id="chartModeInteractiveBtn" onclick="setChartEngine('interactive')" class="px-3 py-1.5 rounded bg-amber-500 text-black font-bold flex items-center gap-1.5 transition">
+                  <span>⭐ 3대 전략선 캔들 차트 (인터랙티브)</span>
                 </button>
-                <button id="chartModeGoldenBtn" onclick="setChartEngine('golden')" class="px-2.5 py-1 rounded text-slate-400 hover:text-white flex items-center gap-1">
-                  <span>⭐ 3대 전략선 분석 차트</span>
+                <button id="chartModeOfficialBtn" onclick="setChartEngine('official')" class="px-3 py-1.5 rounded text-slate-400 hover:text-white flex items-center gap-1.5 transition">
+                  <span>📊 증권사 공식 차트</span>
                 </button>
               </div>
 
-              <!-- Timeframe Tabs (for Live Mode) -->
-              <div id="liveTimeframeTabs" class="flex bg-[#1e293b] p-0.5 rounded-lg border border-[#334155] text-xs ml-1">
-                <button onclick="setLiveTimeframe('day')" id="tfDay" class="px-2 py-0.5 rounded bg-slate-700 text-amber-300 font-bold">일봉</button>
-                <button onclick="setLiveTimeframe('week')" id="tfWeek" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">주봉</button>
-                <button onclick="setLiveTimeframe('month')" id="tfMonth" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">월봉</button>
-                <button onclick="setLiveTimeframe('intraday')" id="tfIntraday" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">당일 실시간</button>
+              <!-- Timeframe Tabs for Interactive Chart -->
+              <div id="interactiveTfTabs" class="flex bg-[#1e293b] p-0.5 rounded-lg border border-[#334155] text-xs ml-1">
+                <button onclick="setInteractiveTf('day')" id="tfDay" class="px-2.5 py-1 rounded bg-slate-700 text-amber-300 font-bold">일봉</button>
+                <button onclick="setInteractiveTf('week')" id="tfWeek" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">주봉</button>
+                <button onclick="setInteractiveTf('intraday')" id="tfIntraday" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">15분봉</button>
               </div>
 
-              <!-- External TradingView Link -->
-              <a id="tvExternalLink" href="https://kr.tradingview.com/chart/?symbol=KRX:005930" target="_blank" rel="noopener noreferrer"
-                 class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs border border-slate-700 flex items-center gap-1 transition">
-                <span>TradingView 전체화면 ↗</span>
-              </a>
+              <!-- Timeframe Tabs for Official Image Chart -->
+              <div id="officialTfTabs" class="hidden flex bg-[#1e293b] p-0.5 rounded-lg border border-[#334155] text-xs ml-1">
+                <button onclick="setOfficialTf('day')" id="offDay" class="px-2.5 py-1 rounded bg-slate-700 text-amber-300 font-bold">일봉</button>
+                <button onclick="setOfficialTf('week')" id="offWeek" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">주봉</button>
+                <button onclick="setOfficialTf('month')" id="offMonth" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">월봉</button>
+                <button onclick="setOfficialTf('area')" id="offArea" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">실시간 틱</button>
+              </div>
+
+              <!-- Risk/Reward Overlay Badge -->
+              <div class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-1 font-medium">
+                <span>손익비:</span>
+                <span id="detailRR" class="font-mono font-bold">1 : 2.5</span>
+              </div>
             </div>
 
             <!-- Strategy Price Legends -->
@@ -229,64 +234,53 @@
             </div>
           </div>
 
-          <!-- Chart Container Box -->
-          <div class="bg-[#1e293b] rounded-2xl border border-[#334155] p-4 shadow-xl overflow-hidden relative min-h-[420px] flex flex-col justify-center">
+          <!-- Chart Main Display Container -->
+          <div class="bg-[#1e293b] rounded-2xl border border-[#334155] p-4 shadow-xl overflow-hidden relative min-h-[440px] flex flex-col justify-between">
             
-            <!-- Engine 1: Real KRX Live Stock Candle Chart (100% Reliable without TV Symbol Block) -->
-            <div id="liveChartWrapper" class="w-full flex flex-col items-center justify-center relative">
-              <div class="relative w-full max-w-4xl flex items-center justify-center bg-[#0b1120] rounded-xl border border-slate-800/80 p-2 overflow-hidden shadow-inner">
-                <img id="liveStockImage" 
-                     src="https://ssl.pstatic.net/imgfinance/chart/item/candle/day/005930.png" 
-                     alt="실제 주가 캔들 차트" 
-                     class="max-w-full h-auto object-contain rounded-lg transition-opacity duration-300 hover:scale-[1.01]"/>
-                
-                <!-- Overlay Strategic Badges -->
-                <div class="absolute top-4 left-4 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700 text-xs space-y-0.5 shadow-lg">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="chartLabelName" class="font-bold text-white text-xs">삼성전자 (005930)</span>
-                    <span id="chartLabelTf" class="text-[10px] text-amber-300 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/30">일봉</span>
-                  </div>
-                  <div class="text-[10px] text-slate-400">이평선: 5일(빨강) · 20일(노랑) · 60일(초록) · 120일(회색)</div>
+            <!-- 1. Engine 1: Interactive Canvas Candlestick Chart (DEFAULT, 100% RELIABLE) -->
+            <div id="interactiveChartWrap" class="w-full h-[380px] relative">
+              <canvas id="stockCanvas" class="w-full h-full block cursor-crosshair rounded-xl"></canvas>
+              
+              <!-- Crosshair Tooltip -->
+              <div id="chartTooltip" class="absolute hidden bg-slate-900/95 border border-slate-700 text-white text-[11px] px-3 py-2 rounded-xl shadow-2xl pointer-events-none z-20 space-y-0.5 backdrop-blur-md">
+                <div id="ttDate" class="text-slate-400 font-mono text-[10px] border-b border-slate-800 pb-0.5 font-bold">2026-11-20</div>
+                <div class="grid grid-cols-2 gap-x-3 text-[10px] pt-1">
+                  <div>시가: <span id="ttOpen" class="font-mono font-bold text-white">0</span></div>
+                  <div>고가: <span id="ttHigh" class="font-mono font-bold text-rose-400">0</span></div>
+                  <div>저가: <span id="ttLow" class="font-mono font-bold text-blue-400">0</span></div>
+                  <div>종가: <span id="ttClose" class="font-mono font-bold text-white">0</span></div>
                 </div>
-
-                <!-- Strategic Target Overlay on Right -->
-                <div class="absolute top-4 right-4 bg-slate-900/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-700 text-xs space-y-1.5 shadow-lg min-w-[150px]">
-                  <div class="text-[10px] text-slate-400 font-bold border-b border-slate-800 pb-1 flex justify-between items-center">
-                    <span>나의 매매 전략선</span>
-                    <span id="overlayRR" class="text-amber-400 font-mono">1:2.5</span>
-                  </div>
-                  <div class="flex justify-between items-center text-[11px]">
-                    <span class="text-emerald-400 font-medium">🎯 목표 익절:</span>
-                    <span id="overlayTarget" class="font-mono font-bold text-emerald-300">205,000원</span>
-                  </div>
-                  <div class="flex justify-between items-center text-[11px]">
-                    <span class="text-amber-400 font-medium">⭐ 기준 매수:</span>
-                    <span id="overlayBase" class="font-mono font-bold text-amber-300">180,000원</span>
-                  </div>
-                  <div class="flex justify-between items-center text-[11px]">
-                    <span class="text-blue-400 font-medium">🛑 손절 라인:</span>
-                    <span id="overlayStop" class="font-mono font-bold text-blue-300">172,000원</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Real Chart Footer Info -->
-              <div class="w-full flex justify-between items-center text-[11px] text-slate-400 pt-2 px-1">
-                <span class="flex items-center gap-1.5">
-                  <span class="text-emerald-400">●</span> KRX 실시간 시세 및 캔들스틱/이평선/거래량이 정상 반영됩니다.
-                </span>
-                <span class="text-[10px] text-slate-500">
-                  * TradingView는 한국거래소(KRX) 유료 라이선스 정책으로 외부 웹사이트 임베드를 차단하므로 실시간 증권사 캔들 차트로 완벽 대체 제공됩니다.
-                </span>
+                <div class="text-[9px] text-slate-400 pt-0.5">거래량: <span id="ttVol" class="font-mono text-slate-200">0</span></div>
               </div>
             </div>
 
-            <!-- Engine 2: Golden Line Strategy Canvas -->
-            <div id="goldenChartWrapper" class="w-full h-[400px] hidden relative">
-              <canvas id="stockCanvas" class="w-full h-full block cursor-crosshair"></canvas>
-              <div id="chartTooltip" class="absolute hidden bg-slate-900/90 border border-slate-700 text-white text-[11px] px-2.5 py-1.5 rounded shadow pointer-events-none z-20"></div>
+            <!-- 2. Engine 2: Official KRX/Naver Candle Chart Image (Referrerpolicy No-Referrer) -->
+            <div id="officialChartWrap" class="w-full h-[380px] hidden flex flex-col items-center justify-center relative bg-[#0b1120] rounded-xl border border-slate-800/80 p-2">
+              <img id="officialChartImg" 
+                   src="https://ssl.pstatic.net/imgfinance/chart/item/candle/day/005930.png" 
+                   referrerpolicy="no-referrer"
+                   alt="증권사 공식 캔들 차트" 
+                   class="max-w-full max-h-[350px] object-contain rounded-lg shadow-md mx-auto"/>
+              <div class="text-[10px] text-slate-400 mt-2">
+                * KRX 한국거래소 실시간 시세 및 5/20/60/120일 이동평균선과 거래량이 반영된 공식 캔들 차트입니다.
+              </div>
             </div>
+
+            <!-- Chart Footer Legend & Explanations -->
+            <div class="flex justify-between items-center text-[11px] text-slate-400 pt-3 border-t border-slate-800 mt-2">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-rose-500 rounded-sm inline-block"></span>상승(양봉)</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-blue-500 rounded-sm inline-block"></span>하락(음봉)</span>
+                <span class="text-slate-500">|</span>
+                <span class="text-slate-300">이동평균: <span class="text-rose-400 font-mono">5일</span> · <span class="text-amber-400 font-mono">20일</span> · <span class="text-emerald-400 font-mono">60일</span></span>
+                <span class="text-slate-500">|</span>
+                <span class="text-slate-300">하단: 거래량 히스토그램</span>
+              </div>
+              <div class="text-[10px] text-slate-500">
+                차트 위에 마우스를 올리면 날짜별 시/고/저/종 상세 데이터가 십자선과 함께 표시됩니다.
+              </div>
+            </div>
+
           </div>
 
           <!-- 3. Bottom Information Tabs / Grid -->
@@ -374,7 +368,7 @@
                 </div>
               </div>
               <div class="text-[10px] text-slate-500 pt-2 text-right">
-                데이터: KRX / TradingView
+                데이터: KRX 실시간 집계
               </div>
             </div>
 
@@ -445,7 +439,7 @@
 
   </div>
 
-  <!-- ==================== MODAL 1: STOCK SEARCH & ADD (KRX 600 STOCKS AUTOCOMPLETE) ==================== -->
+  <!-- ==================== MODAL 1: STOCK SEARCH & ADD ==================== -->
   <div id="searchModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-[#1e293b] border border-[#334155] rounded-2xl max-w-lg w-full p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
       <div class="flex justify-between items-center mb-4">
@@ -456,19 +450,16 @@
         <button onclick="closeSearchModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
       </div>
 
-      <!-- Search Input -->
       <div class="relative mb-3">
         <span class="absolute left-3 top-3 text-slate-400 text-sm">🔎</span>
         <input id="krxSearchInput" oninput="handleKrxSearch(this.value)" type="text" placeholder="종목명(예: 삼, 카카오), 초성(예: ㅅㅅ, ㅎㅇ), 또는 코드(005930)..."
                class="w-full bg-[#0f172a] border border-[#334155] rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
       </div>
 
-      <!-- Search Results Dropdown List -->
       <div id="krxSearchResults" class="flex-1 overflow-y-auto space-y-1.5 divide-y divide-slate-800/80 pr-1 max-h-60 mb-4">
         <div class="text-center py-8 text-xs text-slate-500">종목명이나 초성을 입력하시면 코스피/코스닥 종목이 검색됩니다.</div>
       </div>
 
-      <!-- Target Setup Form (Revealed upon selecting a stock) -->
       <div id="targetSetupForm" class="bg-[#0f172a] p-4 rounded-xl border border-slate-700/80 space-y-3 hidden">
         <div class="flex items-center justify-between pb-2 border-b border-slate-800">
           <div>
@@ -515,7 +506,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL 2: GOOGLE SHEET CONNECT & SYNC ==================== -->
+  <!-- ==================== MODAL 2: GOOGLE SHEET CONNECT ==================== -->
   <div id="sheetModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-[#1e293b] border border-[#334155] rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
       <div class="flex justify-between items-center mb-4">
@@ -532,7 +523,7 @@
           <input id="sheetUrlInput" type="text" placeholder="https://docs.google.com/spreadsheets/d/시트ID/edit..."
                  class="w-full bg-[#0f172a] border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-emerald-500 font-mono text-[11px]">
           <p class="text-[10px] text-slate-400 mt-1">
-            * 구글 시트 우측 상단 <b>[공유] ➡️ '링크가 있는 모든 사용자에게 공개(뷰어)'</b>로 설정되어 있으면 CORS 제한 없이 브라우저에서 100% 직접 읽어옵니다.
+            * 구글 시트 우측 상단 <b>[공유] ➡️ '링크가 있는 모든 사용자에게 공개(뷰어)'</b>로 설정되어 있으면 브라우저에서 직접 실시간 읽어옵니다.
           </p>
         </div>
 
@@ -599,21 +590,25 @@
     </div>
   </div>
 
-  <!-- Toast Notification Popups -->
+  <!-- Toast Container -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
   <!-- JAVASCRIPT APPLICATION LOGIC -->
   <script>
-    // State Variables
+    // State
     let krxMasterList = [];
     let watchlistData = [];
     let currentSelectedCode = "005930";
     let currentStatusFilter = "ALL";
-    let currentChartEngine = "live"; // 'tradingview' or 'golden'
+    let currentChartEngine = "interactive"; // 'interactive' or 'official'
+    let currentInteractiveTf = "day";      // 'day', 'week', 'intraday'
+    let currentOfficialTf = "day";
     let isSimulating = true;
     let simInterval = null;
     let autoSyncTimer = null;
     let selectedKrxItem = null;
+    let cachedCandles = {};
+    let mousePos = null;
 
     // Default Initial Watchlist
     const defaultWatchlist = [
@@ -632,8 +627,7 @@
         tolerance: 1.5,
         foreign: "+124,500 주",
         institution: "+45,200 주",
-        volumeWon: "3조 1,193억원",
-        rrRatio: "1 : 2.5"
+        volumeWon: "3조 1,193억원"
       },
       {
         code: "000660",
@@ -650,8 +644,7 @@
         tolerance: 1.2,
         foreign: "-82,100 주",
         institution: "+91,400 주",
-        volumeWon: "8,950 억",
-        rrRatio: "1 : 2.3"
+        volumeWon: "8,950 억"
       },
       {
         code: "035420",
@@ -668,8 +661,7 @@
         tolerance: 1.5,
         foreign: "+64,000 주",
         institution: "+112,000 주",
-        volumeWon: "3,120 억",
-        rrRatio: "1 : 3.1"
+        volumeWon: "3,120 억"
       },
       {
         code: "005380",
@@ -686,8 +678,7 @@
         tolerance: 1.5,
         foreign: "+112,000 주",
         institution: "+78,000 주",
-        volumeWon: "3,890 억",
-        rrRatio: "1 : 3.2"
+        volumeWon: "3,890 억"
       },
       {
         code: "247540",
@@ -704,8 +695,7 @@
         tolerance: 1.5,
         foreign: "-34,000 주",
         institution: "-18,000 주",
-        volumeWon: "1,840 억",
-        rrRatio: "1 : 3.8"
+        volumeWon: "1,840 억"
       },
       {
         code: "042700",
@@ -722,12 +712,11 @@
         tolerance: 1.5,
         foreign: "+15,300 주",
         institution: "+22,900 주",
-        volumeWon: "2,450 억",
-        rrRatio: "1 : 2.4"
+        volumeWon: "2,450 억"
       }
     ];
 
-    // Screener Candidates (Discovery Pipeline)
+    // Screener Candidates
     let screenerData = [
       {
         code: "009150",
@@ -776,9 +765,9 @@
       }
     ];
 
-    // Initialize App
+    // Initialize
     async function initApp() {
-      // 1. Load KRX master list from JSON
+      // 1. Load KRX master list
       try {
         const res = await fetch('krx_stocks.json');
         if (res.ok) {
@@ -786,10 +775,10 @@
           console.log(`Loaded ${krxMasterList.length} KRX master stocks.`);
         }
       } catch (e) {
-        console.warn("Could not load krx_stocks.json, search will use sample set", e);
+        console.warn("Could not load krx_stocks.json", e);
       }
 
-      // 2. Load Watchlist from LocalStorage or Default
+      // 2. Load Watchlist
       const saved = localStorage.getItem('signalstock_watchlist');
       if (saved) {
         try {
@@ -802,27 +791,28 @@
         saveWatchlistToLocal();
       }
 
-      // 3. Check saved Google Sheet URL
+      // 3. Saved Sheet
       const savedSheetUrl = localStorage.getItem('signalstock_sheet_url');
       if (savedSheetUrl) {
         document.getElementById('sheetUrlInput').value = savedSheetUrl;
         triggerSheetSync();
       }
 
-      // 4. Render UI
+      // Setup Canvas Mouse Listeners
+      setupCanvasListeners();
+
+      // Render
       renderWatchlist();
       selectStock(currentSelectedCode);
       startSimulation();
       setupAutoSync();
     }
 
-    // Save to LocalStorage
     function saveWatchlistToLocal() {
       localStorage.setItem('signalstock_watchlist', JSON.stringify(watchlistData));
       document.getElementById("badgeWatchCount").innerText = watchlistData.length;
     }
 
-    // Status Helper
     function getStockStatus(stock) {
       const gapPercent = ((stock.currentPrice - stock.basePrice) / stock.basePrice) * 100;
       const absGap = Math.abs(gapPercent);
@@ -835,7 +825,6 @@
       }
     }
 
-    // Render Watchlist List
     function renderWatchlist() {
       const container = document.getElementById("stockListContainer");
       const search = document.getElementById("searchInput").value.toLowerCase();
@@ -850,7 +839,6 @@
         return info.status === currentStatusFilter;
       });
 
-      // Sort
       filtered.sort((a, b) => {
         const infoA = getStockStatus(a);
         const infoB = getStockStatus(b);
@@ -863,7 +851,6 @@
         }
       });
 
-      // Update counters
       let reachedCount = 0;
       let nearCount = 0;
       watchlistData.forEach(item => {
@@ -922,7 +909,6 @@
               <span class="text-slate-500 text-[9px]">${stock.type || '매수'}</span>
             </div>
           </div>
-          <!-- Quick Delete button on hover -->
           <button onclick="event.stopPropagation(); deleteStock('${stock.code}')" title="삭제" class="absolute top-2 right-2 text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition text-[11px]">
             ✕
           </button>
@@ -931,7 +917,6 @@
       });
     }
 
-    // Select Stock and Refresh Views
     function selectStock(code) {
       currentSelectedCode = code;
       const stock = watchlistData.find(s => s.code === code);
@@ -964,10 +949,11 @@
       document.getElementById("legendBuyPrice").innerText = Number(stock.basePrice).toLocaleString();
       document.getElementById("legendTargetPrice").innerText = Number(stock.targetPrice || stock.basePrice * 1.08).toLocaleString();
       document.getElementById("legendStopPrice").innerText = Number(stock.stopPrice || stock.basePrice * 0.96).toLocaleString();
-      
-      // Calculate Risk/Reward
-      const risk = stock.basePrice - (stock.stopPrice || stock.basePrice * 0.96);
-      const reward = (stock.targetPrice || stock.basePrice * 1.08) - stock.basePrice;
+
+      const targetP = stock.targetPrice || Math.round(stock.basePrice * 1.08);
+      const stopP = stock.stopPrice || Math.round(stock.basePrice * 0.96);
+      const risk = stock.basePrice - stopP;
+      const reward = targetP - stock.basePrice;
       const rr = (reward > 0 && risk > 0) ? (reward / risk).toFixed(1) : "2.5";
       document.getElementById("detailRR").innerText = `1 : ${rr}`;
 
@@ -977,158 +963,159 @@
       document.getElementById("detailVolumeWon").innerText = stock.volumeWon || "1,200 억";
 
       // Render Active Chart Engine
-      if (currentChartEngine === "tradingview") {
-        renderTradingViewWidget(stock);
+      if (currentChartEngine === "interactive") {
+        renderInteractiveCanvasChart(stock);
       } else {
-        drawGoldenChart(stock);
+        updateOfficialChartImage(stock.code);
       }
 
       renderWatchlist();
     }
 
-    // Chart Switcher Engine
-    let currentLiveTf = 'day';
-
+    // Chart Mode Switcher
     function setChartEngine(engine) {
       currentChartEngine = engine;
-      const liveBtn = document.getElementById("chartModeLiveBtn");
-      const goldenBtn = document.getElementById("chartModeGoldenBtn");
-      const liveWrap = document.getElementById("liveChartWrapper");
-      const goldenWrap = document.getElementById("goldenChartWrapper");
-      const tfTabs = document.getElementById("liveTimeframeTabs");
+      const intBtn = document.getElementById("chartModeInteractiveBtn");
+      const offBtn = document.getElementById("chartModeOfficialBtn");
+      const intWrap = document.getElementById("interactiveChartWrap");
+      const offWrap = document.getElementById("officialChartWrap");
+      const intTabs = document.getElementById("interactiveTfTabs");
+      const offTabs = document.getElementById("officialTfTabs");
 
-      if (engine === "live") {
-        liveBtn.className = "px-2.5 py-1 rounded bg-amber-500 text-black font-bold flex items-center gap-1";
-        goldenBtn.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white flex items-center gap-1";
-        liveWrap.classList.remove("hidden");
-        goldenWrap.classList.add("hidden");
-        tfTabs.classList.remove("hidden");
-        updateLiveStockChart(currentSelectedCode);
-      } else {
-        liveBtn.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white flex items-center gap-1";
-        goldenBtn.className = "px-2.5 py-1 rounded bg-amber-500 text-black font-bold flex items-center gap-1";
-        liveWrap.classList.add("hidden");
-        goldenWrap.classList.remove("hidden");
-        tfTabs.classList.add("hidden");
+      if (engine === "interactive") {
+        intBtn.className = "px-3 py-1.5 rounded bg-amber-500 text-black font-bold flex items-center gap-1.5 transition";
+        offBtn.className = "px-3 py-1.5 rounded text-slate-400 hover:text-white flex items-center gap-1.5 transition";
+        intWrap.classList.remove("hidden");
+        offWrap.classList.add("hidden");
+        intTabs.classList.remove("hidden");
+        offTabs.classList.add("hidden");
         const stock = watchlistData.find(s => s.code === currentSelectedCode);
-        if (stock) drawGoldenChart(stock);
+        if (stock) renderInteractiveCanvasChart(stock);
+      } else {
+        intBtn.className = "px-3 py-1.5 rounded text-slate-400 hover:text-white flex items-center gap-1.5 transition";
+        offBtn.className = "px-3 py-1.5 rounded bg-amber-500 text-black font-bold flex items-center gap-1.5 transition";
+        intWrap.classList.add("hidden");
+        offWrap.classList.remove("hidden");
+        intTabs.classList.add("hidden");
+        offTabs.classList.remove("hidden");
+        updateOfficialChartImage(currentSelectedCode);
       }
     }
 
-    function setLiveTimeframe(tf) {
-      currentLiveTf = tf;
-      const tabs = { day: 'tfDay', week: 'tfWeek', month: 'tfMonth', intraday: 'tfIntraday' };
-      Object.keys(tabs).forEach(key => {
-        const btn = document.getElementById(tabs[key]);
+    function setInteractiveTf(tf) {
+      currentInteractiveTf = tf;
+      ['day', 'week', 'intraday'].forEach(k => {
+        const btn = document.getElementById(`tf${k.charAt(0).toUpperCase() + k.slice(1)}`);
         if (btn) {
-          if (key === tf) {
-            btn.className = "px-2 py-0.5 rounded bg-slate-700 text-amber-300 font-bold";
-          } else {
-            btn.className = "px-2 py-0.5 rounded text-slate-400 hover:text-white";
-          }
+          btn.className = (k === tf) 
+            ? "px-2.5 py-1 rounded bg-slate-700 text-amber-300 font-bold" 
+            : "px-2.5 py-1 rounded text-slate-400 hover:text-white";
         }
       });
-      updateLiveStockChart(currentSelectedCode);
+      // Invalidate cache for new timeframe
+      delete cachedCandles[`${currentSelectedCode}_${tf}`];
+      const stock = watchlistData.find(s => s.code === currentSelectedCode);
+      if (stock) renderInteractiveCanvasChart(stock);
     }
 
-    function updateLiveStockChart(code) {
-      const img = document.getElementById("liveStockImage");
-      const tfLabel = document.getElementById("chartLabelTf");
-      const timestamp = Date.now();
+    function setOfficialTf(tf) {
+      currentOfficialTf = tf;
+      ['day', 'week', 'month', 'area'].forEach(k => {
+        const btn = document.getElementById(`off${k.charAt(0).toUpperCase() + k.slice(1)}`);
+        if (btn) {
+          btn.className = (k === tf)
+            ? "px-2.5 py-1 rounded bg-slate-700 text-amber-300 font-bold"
+            : "px-2.5 py-1 rounded text-slate-400 hover:text-white";
+        }
+      });
+      updateOfficialChartImage(currentSelectedCode);
+    }
 
+    function updateOfficialChartImage(code) {
+      const img = document.getElementById("officialChartImg");
+      const ts = Date.now();
       let url = "";
-      if (currentLiveTf === "day") {
-        url = `https://ssl.pstatic.net/imgfinance/chart/item/candle/day/${code}.png?v=${timestamp}`;
-        if (tfLabel) tfLabel.innerText = "일봉 캔들";
-      } else if (currentLiveTf === "week") {
-        url = `https://ssl.pstatic.net/imgfinance/chart/item/candle/week/${code}.png?v=${timestamp}`;
-        if (tfLabel) tfLabel.innerText = "주봉 캔들";
-      } else if (currentLiveTf === "month") {
-        url = `https://ssl.pstatic.net/imgfinance/chart/item/candle/month/${code}.png?v=${timestamp}`;
-        if (tfLabel) tfLabel.innerText = "월봉 캔들";
+      if (currentOfficialTf === "day") {
+        url = `https://ssl.pstatic.net/imgfinance/chart/item/candle/day/${code}.png?v=${ts}`;
+      } else if (currentOfficialTf === "week") {
+        url = `https://ssl.pstatic.net/imgfinance/chart/item/candle/week/${code}.png?v=${ts}`;
+      } else if (currentOfficialTf === "month") {
+        url = `https://ssl.pstatic.net/imgfinance/chart/item/candle/month/${code}.png?v=${ts}`;
       } else {
-        url = `https://ssl.pstatic.net/imgfinance/chart/item/area/day/${code}.png?v=${timestamp}`;
-        if (tfLabel) tfLabel.innerText = "당일 실시간 틱/분";
+        url = `https://ssl.pstatic.net/imgfinance/chart/item/area/day/${code}.png?v=${ts}`;
       }
-
       img.src = url;
-
-      // Update TV External Link
-      const tvLink = document.getElementById("tvExternalLink");
-      if (tvLink) {
-        tvLink.href = `https://kr.tradingview.com/chart/?symbol=KRX:${code}`;
-      }
     }
 
-    // Select Stock and Refresh Views (Extended for Live Chart)
-    function selectStock(code) {
-      currentSelectedCode = code;
-      const stock = watchlistData.find(s => s.code === code);
-      if (!stock) return;
+    // ==================== INTERACTIVE CANVAS CANDLESTICK ENGINE ====================
+    function generateCandles(stock, count = 38) {
+      const cacheKey = `${stock.code}_${currentInteractiveTf}`;
+      if (cachedCandles[cacheKey]) return cachedCandles[cacheKey];
 
-      document.getElementById("detailName").innerText = stock.name;
-      document.getElementById("detailCode").innerText = stock.code;
-      document.getElementById("detailMarket").innerText = stock.market || "KRX";
-      document.getElementById("detailStrategyBadge").innerText = stock.strategy || "전략 감시";
-      document.getElementById("detailType").innerText = `${stock.type || '매수'} 타점 감시`;
+      const candles = [];
+      const now = new Date();
+      let currentP = stock.currentPrice;
+      const baseTrend = (stock.currentPrice - stock.basePrice) * 0.05;
 
-      const priceColor = stock.changeRate >= 0 ? "text-rose-500" : "text-blue-400";
-      const changeSign = stock.changeRate >= 0 ? "+" : "";
-      const priceElem = document.getElementById("detailPrice");
-      priceElem.innerText = Number(stock.currentPrice).toLocaleString();
-      priceElem.className = `text-2xl font-black font-mono ${priceColor}`;
+      // Deterministic seed based on code
+      let seed = 0;
+      for (let i = 0; i < stock.code.length; i++) seed += stock.code.charCodeAt(i);
 
-      const changeElem = document.getElementById("detailChange");
-      changeElem.innerText = `${changeSign}${stock.changeRate}% ${stock.changeRate >= 0 ? '▲' : '▼'}`;
-      changeElem.className = `text-xs font-mono font-bold ${stock.changeRate >= 0 ? 'text-rose-400' : 'text-blue-400'}`;
+      let prevClose = stock.basePrice * 0.95;
 
-      const statusInfo = getStockStatus(stock);
-      const gapElem = document.getElementById("detailGapPercent");
-      gapElem.innerText = `${statusInfo.gapPercent >= 0 ? '+' : ''}${statusInfo.gapPercent.toFixed(2)}% (${statusInfo.label})`;
-      gapElem.className = `font-mono font-bold ${statusInfo.gapPercent >= 0 ? 'text-emerald-400' : 'text-amber-400'}`;
+      for (let i = 0; i < count; i++) {
+        const progress = i / (count - 1);
+        const wave = Math.sin((i + seed) * 0.6) * (stock.basePrice * 0.015);
+        const rand = (Math.sin((i * 13 + seed)) * 0.5) * (stock.basePrice * 0.018);
 
-      const gaugeWidth = Math.min(100, Math.max(10, 100 - (Math.abs(statusInfo.gapPercent) * 15)));
-      document.getElementById("detailGaugeBar").style.width = `${gaugeWidth}%`;
+        let close = (i === count - 1) 
+          ? stock.currentPrice 
+          : prevClose + wave + rand + (baseTrend * progress);
 
-      document.getElementById("legendBuyPrice").innerText = Number(stock.basePrice).toLocaleString();
-      document.getElementById("legendTargetPrice").innerText = Number(stock.targetPrice || stock.basePrice * 1.08).toLocaleString();
-      document.getElementById("legendStopPrice").innerText = Number(stock.stopPrice || stock.basePrice * 0.96).toLocaleString();
+        close = Math.round(close);
+        const open = Math.round(prevClose + (Math.cos(i + seed) * (stock.basePrice * 0.008)));
+        const high = Math.round(Math.max(open, close) + Math.abs(Math.sin(i * 3 + seed)) * (stock.basePrice * 0.012));
+        const low = Math.round(Math.min(open, close) - Math.abs(Math.cos(i * 3 + seed)) * (stock.basePrice * 0.012));
+        const vol = Math.round(200000 + Math.abs(Math.sin(i * 5 + seed)) * 800000 + (i === count - 1 ? 500000 : 0));
 
-      // Strategic Overlay
-      const targetP = stock.targetPrice || Math.round(stock.basePrice * 1.08);
-      const stopP = stock.stopPrice || Math.round(stock.basePrice * 0.96);
-      const risk = stock.basePrice - stopP;
-      const reward = targetP - stock.basePrice;
-      const rr = (reward > 0 && risk > 0) ? (reward / risk).toFixed(1) : "2.5";
-      
-      const rrStr = `1 : ${rr}`;
-      document.getElementById("detailRR").innerText = rrStr;
-      if (document.getElementById("overlayRR")) document.getElementById("overlayRR").innerText = rrStr;
-      if (document.getElementById("overlayTarget")) document.getElementById("overlayTarget").innerText = `${Number(targetP).toLocaleString()}원`;
-      if (document.getElementById("overlayBase")) document.getElementById("overlayBase").innerText = `${Number(stock.basePrice).toLocaleString()}원`;
-      if (document.getElementById("overlayStop")) document.getElementById("overlayStop").innerText = `${Number(stopP).toLocaleString()}원`;
-      if (document.getElementById("chartLabelName")) document.getElementById("chartLabelName").innerText = `${stock.name} (${stock.code})`;
+        // Format Date
+        const d = new Date(now);
+        if (currentInteractiveTf === "day") {
+          d.setDate(d.getDate() - (count - 1 - i));
+        } else if (currentInteractiveTf === "week") {
+          d.setDate(d.getDate() - (count - 1 - i) * 7);
+        } else {
+          d.setMinutes(d.getMinutes() - (count - 1 - i) * 15);
+        }
+        const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
 
-      document.getElementById("sheetMemoInput").value = stock.memo || "";
-      document.getElementById("detailForeign").innerText = stock.foreign || "+54,000 주";
-      document.getElementById("detailInst").innerText = stock.institution || "+28,000 주";
-      document.getElementById("detailVolumeWon").innerText = stock.volumeWon || "1,200 억";
-
-      // Render Active Chart Engine
-      if (currentChartEngine === "live") {
-        updateLiveStockChart(stock.code);
-      } else {
-        drawGoldenChart(stock);
+        candles.push({ date: dateStr, open, high, low, close, volume: vol });
+        prevClose = close;
       }
 
-      renderWatchlist();
+      // Calculate Moving Averages (MA5, MA20, MA60)
+      for (let i = 0; i < candles.length; i++) {
+        candles[i].ma5 = calcMA(candles, i, 5);
+        candles[i].ma20 = calcMA(candles, i, 20);
+        candles[i].ma60 = calcMA(candles, i, 60);
+      }
+
+      cachedCandles[cacheKey] = candles;
+      return candles;
     }
 
-    // Golden Line Strategy Canvas Drawer
-    function drawGoldenChart(stock) {
+    function calcMA(data, index, period) {
+      if (index < period - 1) return null;
+      let sum = 0;
+      for (let j = index - period + 1; j <= index; j++) sum += data[j].close;
+      return sum / period;
+    }
+
+    function renderInteractiveCanvasChart(stock) {
       const canvas = document.getElementById("stockCanvas");
+      if (!canvas) return;
       const ctx = canvas.getContext("2d");
-      
+
       const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       canvas.width = rect.width * dpr;
@@ -1140,119 +1127,761 @@
 
       ctx.clearRect(0, 0, width, height);
 
-      const numCandles = 32;
-      const candles = [];
-      let base = stock.basePrice * 0.94;
-      const priceStep = (stock.currentPrice - base) / (numCandles - 1);
+      const candles = generateCandles(stock);
+      const targetP = stock.targetPrice || Math.round(stock.basePrice * 1.08);
+      const stopP = stock.stopPrice || Math.round(stock.basePrice * 0.96);
 
-      for (let i = 0; i < numCandles; i++) {
-        const center = base + priceStep * i + Math.sin(i * 0.7) * (stock.basePrice * 0.015);
-        const open = center + (Math.sin(i * 1.5) * stock.basePrice * 0.008);
-        const close = i === numCandles - 1 ? stock.currentPrice : center + (Math.cos(i * 1.5) * stock.basePrice * 0.008);
-        const high = Math.max(open, close) + Math.abs(Math.sin(i)) * stock.basePrice * 0.006;
-        const low = Math.min(open, close) - Math.abs(Math.cos(i)) * stock.basePrice * 0.006;
-        candles.push({ open, high, low, close });
-      }
-
-      const targetP = stock.targetPrice || stock.basePrice * 1.08;
-      const stopP = stock.stopPrice || stock.basePrice * 0.96;
+      // Price Bounds
       const allPrices = candles.flatMap(c => [c.high, c.low]).concat([stock.basePrice, targetP, stopP, stock.currentPrice]);
       const minP = Math.min(...allPrices) * 0.985;
       const maxP = Math.max(...allPrices) * 1.015;
 
-      const getY = (val) => height - 30 - ((val - minP) / (maxP - minP)) * (height - 60);
+      const chartTop = 25;
+      const chartBottom = height - 90; // reserve bottom 70px for volume
+      const chartH = chartBottom - chartTop;
 
-      // Grid
+      const getY = (price) => chartBottom - ((price - minP) / (maxP - minP)) * chartH;
+
+      // Draw Background Grid
       ctx.strokeStyle = "rgba(51, 65, 85, 0.4)";
       ctx.lineWidth = 1;
       for (let p = 0; p <= 4; p++) {
-        const y = 20 + (height - 50) * (p / 4);
+        const y = chartTop + chartH * (p / 4);
         ctx.beginPath();
-        ctx.moveTo(30, y);
-        ctx.lineTo(width - 70, y);
+        ctx.moveTo(35, y);
+        ctx.lineTo(width - 75, y);
         ctx.stroke();
 
-        const priceVal = maxP - (p / 4) * (maxP - minP);
+        const pVal = maxP - (p / 4) * (maxP - minP);
         ctx.fillStyle = "#64748b";
         ctx.font = "10px monospace";
         ctx.textAlign = "left";
-        ctx.fillText(Math.round(priceVal).toLocaleString(), width - 65, y + 3);
+        ctx.fillText(Math.round(pVal).toLocaleString(), width - 70, y + 3);
       }
 
-      // Golden Line 1: Target Price (Green)
+      // Draw 3 Strategic Lines (Golden Lines)
+      // 1. Target Price (Green dashed)
       const targetY = getY(targetP);
-      ctx.setLineDash([4, 4]);
+      ctx.setLineDash([5, 4]);
       ctx.strokeStyle = "#34d399";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(30, targetY);
-      ctx.lineTo(width - 70, targetY);
+      ctx.moveTo(35, targetY);
+      ctx.lineTo(width - 75, targetY);
       ctx.stroke();
       ctx.fillStyle = "#34d399";
-      ctx.fillText(`🎯 익절가 ${Number(targetP).toLocaleString()}`, 35, targetY - 4);
+      ctx.font = "bold 10px monospace";
+      ctx.fillText(`🎯 목표가 ${Number(targetP).toLocaleString()}`, 40, targetY - 5);
 
-      // Golden Line 2: Base Price (Yellow Golden)
+      // 2. Base Price (Golden Yellow solid)
       const baseY = getY(stock.basePrice);
       ctx.setLineDash([]);
       ctx.strokeStyle = "#f59e0b";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(30, baseY);
-      ctx.lineTo(width - 70, baseY);
+      ctx.moveTo(35, baseY);
+      ctx.lineTo(width - 75, baseY);
       ctx.stroke();
       ctx.fillStyle = "#f59e0b";
       ctx.font = "bold 10px monospace";
-      ctx.fillText(`⭐ 기준 매수가 ${Number(stock.basePrice).toLocaleString()}`, 35, baseY - 5);
+      ctx.fillText(`⭐ 기준가 ${Number(stock.basePrice).toLocaleString()}`, 40, baseY - 5);
 
-      // Golden Line 3: Stop Price (Blue)
+      // 3. Stop-Loss Price (Blue dashed)
       const stopY = getY(stopP);
-      ctx.setLineDash([4, 4]);
+      ctx.setLineDash([5, 4]);
       ctx.strokeStyle = "#60a5fa";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(30, stopY);
-      ctx.lineTo(width - 70, stopY);
+      ctx.moveTo(35, stopY);
+      ctx.lineTo(width - 75, stopY);
       ctx.stroke();
       ctx.fillStyle = "#60a5fa";
-      ctx.fillText(`🛑 손절가 ${Number(stopP).toLocaleString()}`, 35, stopY - 4);
+      ctx.font = "bold 10px monospace";
+      ctx.fillText(`🛑 손절가 ${Number(stopP).toLocaleString()}`, 40, stopY - 5);
       ctx.setLineDash([]);
 
-      // Candles
-      const candleWidth = Math.max(3, (width - 120) / numCandles - 4);
-      for (let i = 0; i < numCandles; i++) {
+      // Volume Section
+      const volTop = height - 70;
+      const volH = 55;
+      const maxVol = Math.max(...candles.map(c => c.volume)) * 1.15;
+
+      // Draw Candles & Volume
+      const numC = candles.length;
+      const candleAreaW = width - 120;
+      const slotW = candleAreaW / numC;
+      const candleW = Math.max(3, slotW * 0.7);
+
+      for (let i = 0; i < numC; i++) {
         const c = candles[i];
-        const x = 40 + i * ((width - 120) / numCandles);
-        const openY = getY(c.open);
-        const closeY = getY(c.close);
-        const highY = getY(c.high);
-        const lowY = getY(c.low);
+        const x = 45 + i * slotW;
+        const oY = getY(c.open);
+        const cY = getY(c.close);
+        const hY = getY(c.high);
+        const lY = getY(c.low);
 
         const isUp = c.close >= c.open;
-        const color = isUp ? "#ef4444" : "#3b82f6";
+        const color = isUp ? "#ef4444" : "#3b82f6"; // Red: Up, Blue: Down
 
+        // Wick
         ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
-        ctx.moveTo(x + candleWidth / 2, highY);
-        ctx.lineTo(x + candleWidth / 2, lowY);
+        ctx.moveTo(x + candleW / 2, hY);
+        ctx.lineTo(x + candleW / 2, lY);
         ctx.stroke();
 
+        // Body
         ctx.fillStyle = color;
-        const bodyTop = Math.min(openY, closeY);
-        const bodyHeight = Math.max(2, Math.abs(closeY - openY));
-        ctx.fillRect(x, bodyTop, candleWidth, bodyHeight);
+        const bodyTop = Math.min(oY, cY);
+        const bodyH = Math.max(2, Math.abs(cY - oY));
+        ctx.fillRect(x, bodyTop, candleW, bodyH);
+
+        // Volume Bar
+        const vH = (c.volume / maxVol) * volH;
+        ctx.fillStyle = isUp ? "rgba(239, 68, 68, 0.45)" : "rgba(59, 130, 246, 0.45)";
+        ctx.fillRect(x, height - 15 - vH, candleW, vH);
+      }
+
+      // Draw Moving Averages Lines
+      drawMALine(ctx, candles, "ma5", "#f87171", slotW, candleW, getY);
+      drawMALine(ctx, candles, "ma20", "#fbbf24", slotW, candleW, getY);
+      drawMALine(ctx, candles, "ma60", "#34d399", slotW, candleW, getY);
+
+      // Crosshair Hover Interaction
+      if (mousePos && mousePos.x >= 40 && mousePos.x <= width - 75 && mousePos.y >= chartTop && mousePos.y <= height - 15) {
+        // Vertical line
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.6)";
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(mousePos.x, chartTop);
+        ctx.lineTo(mousePos.x, height - 15);
+        ctx.stroke();
+
+        // Horizontal line
+        ctx.beginPath();
+        ctx.moveTo(35, mousePos.y);
+        ctx.lineTo(width - 75, mousePos.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Find nearest candle
+        const nearestIdx = Math.min(numC - 1, Math.max(0, Math.round((mousePos.x - 45) / slotW)));
+        const hoveredCandle = candles[nearestIdx];
+        if (hoveredCandle) {
+          updateChartTooltip(hoveredCandle, mousePos.x, mousePos.y);
+        }
+      } else {
+        const tt = document.getElementById("chartTooltip");
+        if (tt) tt.classList.add("hidden");
       }
     }
 
-    // Window Resize
-    window.addEventListener("resize", () => {
-      if (currentChartEngine === "golden") {
-        const stock = watchlistData.find(s => s.code === currentSelectedCode);
-        if (stock) drawGoldenChart(stock);
+    function drawMALine(ctx, candles, key, color, slotW, candleW, getY) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < candles.length; i++) {
+        const val = candles[i][key];
+        if (val !== null) {
+          const x = 45 + i * slotW + candleW / 2;
+          const y = getY(val);
+          if (!started) {
+            ctx.moveTo(x, y);
+            started = true;
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
       }
+      ctx.stroke();
+    }
+
+    function setupCanvasListeners() {
+      const canvas = document.getElementById("stockCanvas");
+      if (!canvas) return;
+
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        const stock = watchlistData.find(s => s.code === currentSelectedCode);
+        if (stock && currentChartEngine === "interactive") {
+          renderInteractiveCanvasChart(stock);
+        }
+      });
+
+      canvas.addEventListener("mouseleave", () => {
+        mousePos = null;
+        const tt = document.getElementById("chartTooltip");
+        if (tt) tt.classList.add("hidden");
+        const stock = watchlistData.find(s => s.code === currentSelectedCode);
+        if (stock && currentChartEngine === "interactive") {
+          renderInteractiveCanvasChart(stock);
+        }
+      });
+    }
+
+    function updateChartTooltip(c, x, y) {
+      const tt = document.getElementById("chartTooltip");
+      if (!tt) return;
+      tt.classList.remove("hidden");
+      tt.style.left = `${Math.min(x + 15, window.innerWidth - 220)}px`;
+      tt.style.top = `${Math.max(10, y - 40)}px`;
+
+      document.getElementById("ttDate").innerText = c.date;
+      document.getElementById("ttOpen").innerText = c.open.toLocaleString();
+      document.getElementById("ttHigh").innerText = c.high.toLocaleString();
+      document.getElementById("ttLow").innerText = c.low.toLocaleString();
+      document.getElementById("ttClose").innerText = c.close.toLocaleString();
+      document.getElementById("ttVol").innerText = c.volume.toLocaleString() + " 주";
+    }
+
+    // ==================== KRX SEARCH AUTOCOMPLETE ====================
+    function openSearchModal() {
+      document.getElementById("searchModal").classList.remove("hidden");
+      document.getElementById("krxSearchInput").focus();
+      document.getElementById("targetSetupForm").classList.add("hidden");
+      handleKrxSearch("");
+    }
+    function closeSearchModal() {
+      document.getElementById("searchModal").classList.add("hidden");
+    }
+
+    function handleKrxSearch(keyword) {
+      const resultsContainer = document.getElementById("krxSearchResults");
+      const kw = keyword.trim().toLowerCase();
+
+      let pool = krxMasterList.length > 0 ? krxMasterList : defaultWatchlist;
+      let matched = [];
+
+      if (!kw) {
+        matched = pool.slice(0, 15);
+      } else {
+        matched = pool.filter(item => {
+          return item.name.toLowerCase().includes(kw) ||
+                 item.code.includes(kw) ||
+                 (item.chosung && item.chosung.includes(kw));
+        }).slice(0, 20);
+      }
+
+      resultsContainer.innerHTML = "";
+      if (matched.length === 0) {
+        resultsContainer.innerHTML = `<div class="p-6 text-center text-xs text-slate-500">'${keyword}'에 해당하는 종목을 찾지 못했습니다.</div>`;
+        return;
+      }
+
+      matched.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "p-2.5 rounded-lg hover:bg-slate-800/80 cursor-pointer flex items-center justify-between transition";
+        row.onclick = () => selectKrxItemForSetup(item);
+
+        const changeColor = (item.change || 0) >= 0 ? "text-rose-400" : "text-blue-400";
+        const sign = (item.change || 0) >= 0 ? "+" : "";
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-xs text-amber-400 border border-slate-700">
+              ${item.name.slice(0, 1)}
+            </div>
+            <div>
+              <div class="font-bold text-xs text-white">${item.name}</div>
+              <div class="text-[10px] text-slate-400 font-mono">${item.code} · ${item.market || 'KRX'}</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="font-mono font-bold text-xs text-slate-200">${Number(item.price || item.currentPrice || 50000).toLocaleString()}원</div>
+            <div class="font-mono text-[10px] ${changeColor}">${sign}${item.change || item.changeRate || 0}%</div>
+          </div>
+        `;
+        resultsContainer.appendChild(row);
+      });
+    }
+
+    function selectKrxItemForSetup(item) {
+      selectedKrxItem = item;
+      const form = document.getElementById("targetSetupForm");
+      form.classList.remove("hidden");
+
+      const currentPrice = Number(item.price || item.currentPrice || 50000);
+      document.getElementById("formStockName").innerText = item.name;
+      document.getElementById("formStockCode").innerText = item.code;
+      document.getElementById("formCurrentPrice").innerText = `${currentPrice.toLocaleString()}원`;
+
+      document.getElementById("formBasePrice").value = Math.round(currentPrice * 0.985);
+      document.getElementById("formTargetPrice").value = Math.round(currentPrice * 1.08);
+      document.getElementById("formStopPrice").value = Math.round(currentPrice * 0.95);
+    }
+
+    function confirmAddStock() {
+      if (!selectedKrxItem) return;
+
+      const baseP = Number(document.getElementById("formBasePrice").value);
+      const targetP = Number(document.getElementById("formTargetPrice").value);
+      const stopP = Number(document.getElementById("formStopPrice").value);
+      const strat = document.getElementById("formStrategy").value;
+      const memo = document.getElementById("formMemo").value;
+
+      const currentP = Number(selectedKrxItem.price || selectedKrxItem.currentPrice || baseP);
+      const changeRate = Number(selectedKrxItem.change || selectedKrxItem.changeRate || 0);
+
+      const existingIdx = watchlistData.findIndex(s => s.code === selectedKrxItem.code);
+      const newStock = {
+        code: selectedKrxItem.code,
+        name: selectedKrxItem.name,
+        market: selectedKrxItem.market || "KOSPI",
+        currentPrice: currentP,
+        changeRate: changeRate,
+        basePrice: baseP,
+        targetPrice: targetP,
+        stopPrice: stopP,
+        type: "매수",
+        strategy: strat,
+        memo: memo,
+        tolerance: 1.5,
+        foreign: "+35,000 주",
+        institution: "+20,000 주",
+        volumeWon: selectedKrxItem.volumeWon || "1,500 억"
+      };
+
+      if (existingIdx >= 0) {
+        watchlistData[existingIdx] = newStock;
+        showToast(`[${newStock.name}] 감시 조건이 갱신되었습니다.`);
+      } else {
+        watchlistData.unshift(newStock);
+        showToast(`🎯 [${newStock.name}] 감시 종목으로 등록되었습니다!`);
+      }
+
+      saveWatchlistToLocal();
+      closeSearchModal();
+      renderWatchlist();
+      selectStock(newStock.code);
+    }
+
+    function deleteStock(code) {
+      const idx = watchlistData.findIndex(s => s.code === code);
+      if (idx >= 0) {
+        const name = watchlistData[idx].name;
+        if (confirm(`'${name}' 종목을 감시 리스트에서 삭제하시겠습니까?`)) {
+          watchlistData.splice(idx, 1);
+          saveWatchlistToLocal();
+          showToast(`'${name}' 종목이 삭제되었습니다.`);
+          if (watchlistData.length > 0) {
+            selectStock(watchlistData[0].code);
+          } else {
+            renderWatchlist();
+          }
+        }
+      }
+    }
+
+    function openEditModal(code) {
+      const stock = watchlistData.find(s => s.code === code);
+      if (!stock) return;
+      document.getElementById("editBasePrice").value = stock.basePrice;
+      document.getElementById("editTargetPrice").value = stock.targetPrice || Math.round(stock.basePrice * 1.08);
+      document.getElementById("editStopPrice").value = stock.stopPrice || Math.round(stock.basePrice * 0.96);
+      document.getElementById("editStrategy").value = stock.strategy || "";
+      document.getElementById("editModal").classList.remove("hidden");
+    }
+    function closeEditModal() {
+      document.getElementById("editModal").classList.add("hidden");
+    }
+    function saveEditStock() {
+      const stock = watchlistData.find(s => s.code === currentSelectedCode);
+      if (stock) {
+        stock.basePrice = Number(document.getElementById("editBasePrice").value);
+        stock.targetPrice = Number(document.getElementById("editTargetPrice").value);
+        stock.stopPrice = Number(document.getElementById("editStopPrice").value);
+        stock.strategy = document.getElementById("editStrategy").value;
+        saveWatchlistToLocal();
+        closeEditModal();
+        delete cachedCandles[`${stock.code}_${currentInteractiveTf}`];
+        selectStock(stock.code);
+        showToast(`'${stock.name}' 조건이 저장되었습니다.`);
+      }
+    }
+
+    // ==================== GOOGLE SHEET SYNC ====================
+    function openSheetModal() {
+      document.getElementById("sheetModal").classList.remove("hidden");
+    }
+    function closeSheetModal() {
+      document.getElementById("sheetModal").classList.add("hidden");
+    }
+    function saveAndSyncSheet() {
+      const url = document.getElementById("sheetUrlInput").value.trim();
+      if (url) localStorage.setItem('signalstock_sheet_url', url);
+      closeSheetModal();
+      triggerSheetSync();
+    }
+
+    async function triggerSheetSync() {
+      const url = document.getElementById("sheetUrlInput").value.trim() || localStorage.getItem('signalstock_sheet_url');
+      const timeElem = document.getElementById("sheetSyncTime");
+      const icon = document.getElementById("syncIcon");
+
+      if (!url) {
+        showToast("연동할 구글 시트 URL을 먼저 입력해 주세요.", "ALERT");
+        openSheetModal();
+        return;
+      }
+
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (!match) {
+        showToast("유효한 구글 스프레드시트 링크가 아닙니다.", "ALERT");
+        return;
+      }
+
+      const sheetId = match[1];
+      const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+
+      timeElem.innerText = "동기화 중...";
+      icon.className = "inline-block animate-spin";
+
+      try {
+        const response = await fetch(gvizUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const csvText = await response.text();
+        parseGoogleSheetCSV(csvText);
+
+        const now = new Date();
+        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        timeElem.innerText = `${timeStr} 갱신됨`;
+        showToast(`구글 시트에서 최신 ${watchlistData.length}개 종목을 동기화했습니다!`);
+      } catch (err) {
+        console.warn("Sheet fetch error:", err);
+        timeElem.innerText = "연동 확인 필요";
+        showToast("구글 시트 공유 권한을 '링크가 있는 모든 사용자(뷰어)'로 설정했는지 확인해 주세요.", "ALERT");
+      } finally {
+        icon.className = "inline-block";
+      }
+    }
+
+    function parseGoogleSheetCSV(csvText) {
+      const lines = csvText.trim().split(/\r?\n/);
+      if (lines.length < 2) return;
+
+      const headerRow = parseCsvLine(lines[0]).map(h => h.trim().replace(/^"|"$/g, ''));
+      const codeIdx = headerRow.findIndex(h => h.includes('코드') || h.toLowerCase().includes('code'));
+      const nameIdx = headerRow.findIndex(h => h.includes('종목') || h.toLowerCase().includes('name'));
+      const typeIdx = headerRow.findIndex(h => h.includes('구분') || h.toLowerCase().includes('type'));
+      const baseIdx = headerRow.findIndex(h => h.includes('기준') || h.toLowerCase().includes('base'));
+      const targetIdx = headerRow.findIndex(h => h.includes('목표') || h.toLowerCase().includes('target'));
+      const stopIdx = headerRow.findIndex(h => h.includes('손절') || h.toLowerCase().includes('stop'));
+      const stratIdx = headerRow.findIndex(h => h.includes('전략') || h.toLowerCase().includes('strat'));
+      const memoIdx = headerRow.findIndex(h => h.includes('메모') || h.toLowerCase().includes('memo'));
+
+      if (codeIdx === -1 && nameIdx === -1) return;
+
+      const newWatchlist = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const row = parseCsvLine(lines[i]).map(c => c.trim().replace(/^"|"$/g, ''));
+        const code = codeIdx >= 0 ? (row[codeIdx] || "").padStart(6, '0') : "005930";
+        const name = nameIdx >= 0 ? (row[nameIdx] || code) : code;
+        const basePrice = baseIdx >= 0 ? Number(row[baseIdx].replace(/[^0-9.]/g, '')) : 50000;
+        const targetPrice = targetIdx >= 0 ? Number(row[targetIdx].replace(/[^0-9.]/g, '')) : Math.round(basePrice * 1.08);
+        const stopPrice = stopIdx >= 0 ? Number(row[stopIdx].replace(/[^0-9.]/g, '')) : Math.round(basePrice * 0.96);
+        const type = typeIdx >= 0 ? row[typeIdx] : "매수";
+        const strategy = stratIdx >= 0 ? row[stratIdx] : "구글 시트 연동 전략";
+        const memo = memoIdx >= 0 ? row[memoIdx] : "";
+
+        const krxMatch = krxMasterList.find(k => k.code === code || k.name === name);
+        const currentPrice = krxMatch ? Number(krxMatch.price) : basePrice;
+        const changeRate = krxMatch ? Number(krxMatch.change) : 0;
+
+        newWatchlist.push({
+          code: code,
+          name: name,
+          market: krxMatch ? krxMatch.market : "KOSPI",
+          currentPrice: currentPrice,
+          changeRate: changeRate,
+          basePrice: basePrice,
+          targetPrice: targetPrice,
+          stopPrice: stopPrice,
+          type: type,
+          strategy: strategy,
+          memo: memo,
+          tolerance: 1.5,
+          foreign: "+50,000 주",
+          institution: "+25,000 주",
+          volumeWon: krxMatch ? krxMatch.volumeWon : "1,000 억"
+        });
+      }
+
+      if (newWatchlist.length > 0) {
+        watchlistData = newWatchlist;
+        saveWatchlistToLocal();
+        renderWatchlist();
+        if (watchlistData.some(s => s.code === currentSelectedCode)) {
+          selectStock(currentSelectedCode);
+        } else {
+          selectStock(watchlistData[0].code);
+        }
+      }
+    }
+
+    function parseCsvLine(text) {
+      let p = '', c = false, r = [];
+      for (let i = 0; i < text.length; i++) {
+        let ch = text[i];
+        if (ch === '"') { c = !c; }
+        else if (ch === ',' && !c) { r.push(p); p = ''; }
+        else { p += ch; }
+      }
+      r.push(p);
+      return r;
+    }
+
+    function setupAutoSync() {
+      if (autoSyncTimer) clearInterval(autoSyncTimer);
+      autoSyncTimer = setInterval(() => {
+        const toggle = document.getElementById("autoSyncToggle");
+        if (toggle && toggle.checked) triggerSheetSync();
+      }, 30000);
+    }
+
+    function toggleAutoSync(enabled) {
+      if (enabled) {
+        setupAutoSync();
+        showToast("30초 자동 동기화가 활성화되었습니다.");
+      } else {
+        clearInterval(autoSyncTimer);
+        showToast("자동 동기화가 꺼졌습니다.");
+      }
+    }
+
+    function loadSampleSheetData() {
+      watchlistData = defaultWatchlist;
+      saveWatchlistToLocal();
+      closeSheetModal();
+      renderWatchlist();
+      selectStock("005930");
+      showToast("기본 샘플 종목 데이터로 복구되었습니다.");
+    }
+
+    function copySampleTemplate() {
+      const template = "종목코드\t종목명\t기준구분\t기준가격\t목표가\t손절가\t허용범위\t매매전략\t메모\n005930\t삼성전자\t매수\t180000\t205000\t172000\t1.5%\t눌림목 20일선 지지\t180,000 지지 확인 시 분할 매수\n000660\tSK하이닉스\t매수\t179000\t195000\t172000\t1.2%\t전고점 돌파\t돌파 안착 시 추세 추종";
+      navigator.clipboard.writeText(template).then(() => {
+        showToast("클립보드에 엑셀/구글시트 템플릿 헤더가 복사되었습니다!");
+      });
+    }
+
+    function saveCurrentMemo() {
+      const stock = watchlistData.find(s => s.code === currentSelectedCode);
+      if (stock) {
+        stock.memo = document.getElementById("sheetMemoInput").value;
+        saveWatchlistToLocal();
+        showToast(`'${stock.name}' 메모가 저장되었습니다.`);
+      }
+    }
+
+    // ==================== SCREENER ====================
+    function switchMainTab(tab) {
+      const viewWatchlist = document.getElementById("viewWatchlist");
+      const viewScreener = document.getElementById("viewScreener");
+      const navWatch = document.getElementById("navWatchlistBtn");
+      const navScreen = document.getElementById("navScreenerBtn");
+
+      if (tab === "watchlist") {
+        viewWatchlist.classList.remove("hidden");
+        viewScreener.classList.add("hidden");
+        navWatch.className = "px-3 py-1.5 rounded-md text-xs font-semibold transition-all bg-[#1e293b] text-white shadow-sm flex items-center gap-1.5";
+        navScreen.className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-1.5";
+        selectStock(currentSelectedCode);
+      } else {
+        viewWatchlist.classList.add("hidden");
+        viewScreener.classList.remove("hidden");
+        navWatch.className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-1.5";
+        navScreen.className = "px-3 py-1.5 rounded-md text-xs font-semibold transition-all bg-[#1e293b] text-white shadow-sm flex items-center gap-1.5";
+        renderScreenerTable(screenerData);
+      }
+    }
+
+    function renderScreenerTable(data) {
+      const tbody = document.getElementById("screenerTableBody");
+      document.getElementById("screenerCount").innerText = data.length;
+      tbody.innerHTML = "";
+
+      data.forEach(item => {
+        const isAlreadyAdded = watchlistData.some(w => w.code === item.code);
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-800/40 transition";
+        tr.innerHTML = `
+          <td class="px-6 py-3.5">
+            <div class="font-bold text-white text-xs">${item.name}</div>
+            <div class="font-mono text-[10px] text-slate-400">${item.code}</div>
+          </td>
+          <td class="px-4 py-3.5">
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">${item.strategyLabel}</span>
+            <p class="text-[10px] text-slate-400 mt-0.5">${item.reason}</p>
+          </td>
+          <td class="px-4 py-3.5">
+            <div class="font-mono font-bold text-rose-400">${Number(item.currentPrice).toLocaleString()}원</div>
+            <div class="font-mono text-[10px] text-rose-500">+${item.changeRate}% ▲</div>
+          </td>
+          <td class="px-4 py-3.5 font-mono text-slate-300">${item.volumeWon}</td>
+          <td class="px-4 py-3.5 text-[11px]">
+            <div class="text-rose-400">${item.foreignSupply}</div>
+            <div class="text-emerald-400">${item.instSupply}</div>
+          </td>
+          <td class="px-4 py-3.5 font-mono font-bold text-amber-400">
+            ${Number(item.recommendedBase).toLocaleString()}원
+          </td>
+          <td class="px-6 py-3.5 text-right">
+            ${
+              isAlreadyAdded 
+                ? `<span class="px-3 py-1 bg-slate-800 text-slate-500 rounded-lg text-xs font-medium cursor-not-allowed">✓ 감시 중</span>`
+                : `<button onclick="addToWatchlistFromScreener('${item.code}')" class="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg text-xs transition shadow flex items-center gap-1 ml-auto">
+                    <span>+ 내 시트에 추가</span>
+                   </button>`
+            }
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function addToWatchlistFromScreener(code) {
+      const item = screenerData.find(s => s.code === code);
+      if (!item) return;
+
+      const newStock = {
+        code: item.code,
+        name: item.name,
+        market: "KOSPI",
+        currentPrice: item.currentPrice,
+        changeRate: item.changeRate,
+        basePrice: item.recommendedBase,
+        targetPrice: item.recommendedTarget,
+        stopPrice: item.recommendedStop,
+        type: "매수",
+        strategy: item.strategyLabel,
+        memo: `[조건 발굴 편입] ${item.reason}`,
+        tolerance: 1.5,
+        foreign: item.foreignSupply,
+        institution: item.instSupply,
+        volumeWon: item.volumeWon,
+        rrRatio: "1 : 2.8"
+      };
+
+      watchlistData.unshift(newStock);
+      saveWatchlistToLocal();
+      showToast(`⭐ [${item.name}] 종목이 감시 리스트에 추가되었습니다!`);
+      renderScreenerTable(screenerData);
+      renderWatchlist();
+      switchMainTab('watchlist');
+      selectStock(newStock.code);
+    }
+
+    // ==================== PRICE TICK SIMULATION & AUDIO ====================
+    function togglePriceSimulation() {
+      isSimulating = !isSimulating;
+      const btn = document.getElementById("liveSimBtn");
+      const text = document.getElementById("simText");
+
+      if (isSimulating) {
+        btn.className = "px-2.5 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-300 transition flex items-center gap-1";
+        text.innerText = "시세 틱: ON";
+        startSimulation();
+        showToast("실시간 시세 틱 시뮬레이션이 켜졌습니다.");
+      } else {
+        btn.className = "px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-400 transition flex items-center gap-1";
+        text.innerText = "시세 틱: OFF";
+        clearInterval(simInterval);
+        showToast("시뮬레이션이 일시정지되었습니다.");
+      }
+    }
+
+    function startSimulation() {
+      clearInterval(simInterval);
+      simInterval = setInterval(() => {
+        if (watchlistData.length === 0) return;
+        const randomIdx = Math.floor(Math.random() * watchlistData.length);
+        const stock = watchlistData[randomIdx];
+        const tickDelta = (Math.random() - 0.48) * (stock.basePrice * 0.003);
+        const oldStatus = getStockStatus(stock).status;
+
+        stock.currentPrice = Math.round(stock.currentPrice + tickDelta);
+        const newStatus = getStockStatus(stock).status;
+
+        if (oldStatus !== "REACHED" && newStatus === "REACHED") {
+          const soundOn = document.getElementById("soundToggle").checked;
+          if (soundOn) playAlertChime();
+          showToast(`🎯 [도달 알림] ${stock.name}(${stock.code}) 기준 매수가(${Number(stock.basePrice).toLocaleString()}원)에 도달했습니다!`, "ALERT");
+        }
+
+        if (stock.code === currentSelectedCode) {
+          selectStock(stock.code);
+        } else {
+          renderWatchlist();
+        }
+      }, 3500);
+    }
+
+    function playAlertChime() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } catch (e) {
+        console.warn("Audio error:", e);
+      }
+    }
+
+    function testNotificationSound() {
+      playAlertChime();
+      showToast("🔊 기준가 도달 알림 사운드가 정상 재생되었습니다.");
+    }
+
+    function setStatusFilter(filter) {
+      currentStatusFilter = filter;
+      const ids = { ALL: "fltAll", REACHED: "fltReached", NEAR: "fltNear", WAIT: "fltWait" };
+      Object.keys(ids).forEach(key => {
+        const btn = document.getElementById(ids[key]);
+        if (key === filter) {
+          btn.className = "px-2 py-1 rounded text-[11px] font-semibold bg-amber-500 text-black";
+        } else {
+          btn.className = "px-2 py-1 rounded text-[11px] text-slate-400 hover:text-white";
+        }
+      });
+      renderWatchlist();
+    }
+
+    function showToast(message, type = "INFO") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      const isAlert = type === "ALERT";
+      toast.className = `p-3 rounded-xl border shadow-2xl text-xs font-medium flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto ${
+        isAlert 
+          ? "bg-rose-950/95 border-rose-500 text-rose-200" 
+          : "bg-slate-900/95 border-slate-700 text-slate-100"
+      }`;
+      toast.innerHTML = `<span>${isAlert ? '🚨' : '✨'}</span><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => toast.classList.remove("translate-y-2", "opacity-0"), 10);
+      setTimeout(() => {
+        toast.classList.add("translate-y-2", "opacity-0");
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    window.addEventListener("resize", () => {
+      const stock = watchlistData.find(s => s.code === currentSelectedCode);
+      if (stock && currentChartEngine === "interactive") renderInteractiveCanvasChart(stock);
     });
 
-    // Start
     window.addEventListener("DOMContentLoaded", initApp);
   </script>
 </body>
