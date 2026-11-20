@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SignalStock - 구글 시트 연동 주식 발굴 & 타점 모니터링 대시보드</title>
+  <title>SignalStock - 구글 시트 연동 주식 발굴 & 인터랙티브 차트 대시보드</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- High-Performance Standalone TradingView Lightweight Charts (Offline & Free from symbol lock) -->
+  <script src="lightweight-charts.standalone.production.js"></script>
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
@@ -27,9 +29,9 @@
       <div>
         <div class="flex items-center gap-2">
           <span class="font-extrabold text-base tracking-tight text-white">SignalStock</span>
-          <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">100% Serverless</span>
+          <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">인터랙티브 차트</span>
         </div>
-        <p class="text-xs text-slate-400">구글 시트 연동 · 실시간 캔들 차트 · 종목 발굴 올인원 대시보드</p>
+        <p class="text-xs text-slate-400">마우스 드래그 · 휠 줌 · 보조지표 조절 완비 실시간 트레이딩 대시보드</p>
       </div>
 
       <!-- Navigation Tabs -->
@@ -181,103 +183,134 @@
         </section>
 
         <!-- Chart Section -->
-        <section class="p-6 space-y-4">
-          <!-- Chart Control Bar & Mode Switcher -->
-          <div class="flex flex-wrap items-center justify-between gap-3">
+        <section class="p-6 space-y-3">
+          
+          <!-- Chart Control Bar & Toolbar -->
+          <div class="bg-[#1e293b] p-3 rounded-2xl border border-[#334155] flex flex-wrap items-center justify-between gap-3 shadow-md">
+            
+            <!-- Group 1: Time Range & Zoom Controls -->
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-bold text-slate-400">차트 뷰:</span>
-              <div class="flex bg-[#1e293b] p-0.5 rounded-lg border border-[#334155] text-xs">
-                <button id="chartModeInteractiveBtn" onclick="setChartEngine('interactive')" class="px-3 py-1.5 rounded bg-amber-500 text-black font-bold flex items-center gap-1.5 transition">
-                  <span>⭐ 3대 전략선 캔들 차트 (인터랙티브)</span>
-                </button>
-                <button id="chartModeOfficialBtn" onclick="setChartEngine('official')" class="px-3 py-1.5 rounded text-slate-400 hover:text-white flex items-center gap-1.5 transition">
-                  <span>📊 증권사 공식 차트</span>
-                </button>
+              <span class="text-xs font-bold text-slate-400">기간:</span>
+              <div class="flex bg-[#0f172a] p-0.5 rounded-lg border border-[#334155] text-xs">
+                <button onclick="setCandleRange(30)" id="range30" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">1개월</button>
+                <button onclick="setCandleRange(60)" id="range60" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">3개월</button>
+                <button onclick="setCandleRange(120)" id="range120" class="px-2.5 py-1 rounded bg-amber-500 text-black font-bold transition">6개월</button>
+                <button onclick="setCandleRange(250)" id="range250" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">1년</button>
               </div>
 
-              <!-- Timeframe Tabs for Interactive Chart -->
-              <div id="interactiveTfTabs" class="flex bg-[#1e293b] p-0.5 rounded-lg border border-[#334155] text-xs ml-1">
-                <button onclick="setInteractiveTf('day')" id="tfDay" class="px-2.5 py-1 rounded bg-slate-700 text-amber-300 font-bold">일봉</button>
-                <button onclick="setInteractiveTf('week')" id="tfWeek" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">주봉</button>
-                <button onclick="setInteractiveTf('intraday')" id="tfIntraday" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">15분봉</button>
+              <!-- Zoom & Pan Controls -->
+              <div class="flex items-center gap-1 bg-[#0f172a] p-0.5 rounded-lg border border-[#334155] text-xs ml-1">
+                <button onclick="zoomChart(-1)" title="확대 (마우스 휠 위로 스크롤도 가능)" class="px-2 py-1 text-slate-300 hover:text-white font-bold">➕</button>
+                <button onclick="zoomChart(1)" title="축소 (마우스 휠 아래로 스크롤도 가능)" class="px-2 py-1 text-slate-300 hover:text-white font-bold">➖</button>
+                <button onclick="resetChartZoom()" title="화면 기본 맞춤" class="px-2 py-1 text-slate-300 hover:text-amber-400 font-bold">↺ 초기화</button>
               </div>
 
-              <!-- Timeframe Tabs for Official Image Chart -->
-              <div id="officialTfTabs" class="hidden flex bg-[#1e293b] p-0.5 rounded-lg border border-[#334155] text-xs ml-1">
-                <button onclick="setOfficialTf('day')" id="offDay" class="px-2.5 py-1 rounded bg-slate-700 text-amber-300 font-bold">일봉</button>
-                <button onclick="setOfficialTf('week')" id="offWeek" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">주봉</button>
-                <button onclick="setOfficialTf('month')" id="offMonth" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">월봉</button>
-                <button onclick="setOfficialTf('area')" id="offArea" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">실시간 틱</button>
-              </div>
-
-              <!-- Risk/Reward Overlay Badge -->
-              <div class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-1 font-medium">
-                <span>손익비:</span>
-                <span id="detailRR" class="font-mono font-bold">1 : 2.5</span>
-              </div>
+              <!-- Quick Pan Hint -->
+              <span class="text-[11px] text-slate-400 flex items-center gap-1 ml-2 hidden sm:inline-flex">
+                <span>🖱️ <b>마우스 드래그</b>: 좌우 이동 · <b>휠</b>: 줌 확대/축소</span>
+              </span>
             </div>
 
-            <!-- Strategy Price Legends -->
-            <div class="flex items-center gap-4 text-xs flex-wrap">
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-0.5 bg-amber-400 inline-block"></span>
-                <span class="text-slate-300">기준 매수가: <b id="legendBuyPrice" class="font-mono text-amber-400">180,000</b></span>
+            <!-- Group 2: Indicator Toggles -->
+            <div class="flex items-center gap-2.5 flex-wrap text-xs bg-[#0f172a] px-3 py-1.5 rounded-xl border border-[#334155]">
+              <span class="font-bold text-slate-400 flex items-center gap-1">📊 지표:</span>
+              
+              <label class="flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white">
+                <input id="chkMA5" type="checkbox" checked onchange="toggleIndicator('ma5', this.checked)" class="accent-rose-500 rounded">
+                <span class="text-rose-400 font-semibold">5일선</span>
+              </label>
+
+              <label class="flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white">
+                <input id="chkMA20" type="checkbox" checked onchange="toggleIndicator('ma20', this.checked)" class="accent-amber-400 rounded">
+                <span class="text-amber-400 font-semibold">20일선</span>
+              </label>
+
+              <label class="flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white">
+                <input id="chkMA60" type="checkbox" checked onchange="toggleIndicator('ma60', this.checked)" class="accent-emerald-400 rounded">
+                <span class="text-emerald-400 font-semibold">60일선</span>
+              </label>
+
+              <label class="flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white">
+                <input id="chkBB" type="checkbox" onchange="toggleIndicator('bb', this.checked)" class="accent-purple-400 rounded">
+                <span class="text-purple-300">볼린저밴드(20,2)</span>
+              </label>
+
+              <label class="flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white">
+                <input id="chkVol" type="checkbox" checked onchange="toggleIndicator('vol', this.checked)" class="accent-slate-400 rounded">
+                <span class="text-slate-400">거래량</span>
+              </label>
+            </div>
+
+          </div>
+
+          <!-- Interactive Strategic Price Adjuster Bar (Direct On-Chart Adjustment) -->
+          <div class="bg-[#1e293b]/80 p-2.5 rounded-xl border border-[#334155] flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-1 text-slate-300 font-bold">
+              <span>🎯 전략 기준선 즉시 조절:</span>
+              <span class="text-[10px] text-slate-500 font-normal">(차트 수평선에 실시간 반영)</span>
+            </div>
+
+            <div class="flex items-center gap-4 flex-wrap">
+              <!-- Target Price Stepper -->
+              <div class="flex items-center gap-1 bg-[#0f172a] px-2 py-1 rounded-lg border border-slate-700">
+                <span class="text-emerald-400 font-semibold text-[11px]">🎯 목표가:</span>
+                <button onclick="adjustStrategyPrice('target', -1000)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">-</button>
+                <span id="stepperTarget" class="font-mono font-bold text-emerald-300 px-1">205,000</span>
+                <button onclick="adjustStrategyPrice('target', 1000)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">+</button>
               </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-0.5 bg-emerald-400 inline-block border-b border-dashed border-emerald-400"></span>
-                <span class="text-slate-300">목표 익절가: <b id="legendTargetPrice" class="font-mono text-emerald-400">205,000</b></span>
+
+              <!-- Base Price Stepper -->
+              <div class="flex items-center gap-1 bg-[#0f172a] px-2 py-1 rounded-lg border border-slate-700">
+                <span class="text-amber-400 font-semibold text-[11px]">⭐ 기준가:</span>
+                <button onclick="adjustStrategyPrice('base', -1000)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">-</button>
+                <span id="stepperBase" class="font-mono font-bold text-amber-300 px-1">180,000</span>
+                <button onclick="adjustStrategyPrice('base', 1000)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">+</button>
               </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-0.5 bg-blue-400 inline-block border-b border-dashed border-blue-400"></span>
-                <span class="text-slate-300">손절가: <b id="legendStopPrice" class="font-mono text-blue-400">172,000</b></span>
+
+              <!-- Stop Price Stepper -->
+              <div class="flex items-center gap-1 bg-[#0f172a] px-2 py-1 rounded-lg border border-slate-700">
+                <span class="text-blue-400 font-semibold text-[11px]">🛑 손절가:</span>
+                <button onclick="adjustStrategyPrice('stop', -1000)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">-</button>
+                <span id="stepperStop" class="font-mono font-bold text-blue-300 px-1">172,000</span>
+                <button onclick="adjustStrategyPrice('stop', 1000)" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">+</button>
+              </div>
+
+              <!-- Risk/Reward Result -->
+              <div class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold font-mono text-[11px] flex items-center gap-1">
+                <span>손익비:</span>
+                <span id="stepperRR">1 : 2.5</span>
               </div>
             </div>
           </div>
 
-          <!-- Chart Main Display Container -->
-          <div class="bg-[#1e293b] rounded-2xl border border-[#334155] p-4 shadow-xl overflow-hidden relative min-h-[440px] flex flex-col justify-between">
+          <!-- Chart Display Box (TradingView Lightweight Charts Mount Point) -->
+          <div class="bg-[#1e293b] rounded-2xl border border-[#334155] p-3 shadow-xl overflow-hidden relative min-h-[460px] flex flex-col justify-between">
             
-            <!-- 1. Engine 1: Interactive Canvas Candlestick Chart (DEFAULT, 100% RELIABLE) -->
-            <div id="interactiveChartWrap" class="w-full h-[380px] relative">
-              <canvas id="stockCanvas" class="w-full h-full block cursor-crosshair rounded-xl"></canvas>
-              
-              <!-- Crosshair Tooltip -->
-              <div id="chartTooltip" class="absolute hidden bg-slate-900/95 border border-slate-700 text-white text-[11px] px-3 py-2 rounded-xl shadow-2xl pointer-events-none z-20 space-y-0.5 backdrop-blur-md">
-                <div id="ttDate" class="text-slate-400 font-mono text-[10px] border-b border-slate-800 pb-0.5 font-bold">2026-11-20</div>
-                <div class="grid grid-cols-2 gap-x-3 text-[10px] pt-1">
-                  <div>시가: <span id="ttOpen" class="font-mono font-bold text-white">0</span></div>
-                  <div>고가: <span id="ttHigh" class="font-mono font-bold text-rose-400">0</span></div>
-                  <div>저가: <span id="ttLow" class="font-mono font-bold text-blue-400">0</span></div>
-                  <div>종가: <span id="ttClose" class="font-mono font-bold text-white">0</span></div>
-                </div>
-                <div class="text-[9px] text-slate-400 pt-0.5">거래량: <span id="ttVol" class="font-mono text-slate-200">0</span></div>
-              </div>
+            <!-- Real-Time Floating OHLC Legend (Updates dynamically on crosshair hover) -->
+            <div id="chartLegend" class="absolute top-4 left-4 z-10 flex items-center gap-3 text-xs bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 text-slate-300 font-mono shadow-lg pointer-events-none">
+              <span id="legDate" class="font-bold text-white">2026-11-20</span>
+              <span>시: <b id="legOpen" class="text-slate-100">0</b></span>
+              <span>고: <b id="legHigh" class="text-rose-400">0</b></span>
+              <span>저: <b id="legLow" class="text-blue-400">0</b></span>
+              <span>종: <b id="legClose" class="text-slate-100">0</b></span>
+              <span>량: <b id="legVol" class="text-amber-300">0</b></span>
             </div>
 
-            <!-- 2. Engine 2: Official KRX/Naver Candle Chart Image (Referrerpolicy No-Referrer) -->
-            <div id="officialChartWrap" class="w-full h-[380px] hidden flex flex-col items-center justify-center relative bg-[#0b1120] rounded-xl border border-slate-800/80 p-2">
-              <img id="officialChartImg" 
-                   src="https://ssl.pstatic.net/imgfinance/chart/item/candle/day/005930.png" 
-                   referrerpolicy="no-referrer"
-                   alt="증권사 공식 캔들 차트" 
-                   class="max-w-full max-h-[350px] object-contain rounded-lg shadow-md mx-auto"/>
-              <div class="text-[10px] text-slate-400 mt-2">
-                * KRX 한국거래소 실시간 시세 및 5/20/60/120일 이동평균선과 거래량이 반영된 공식 캔들 차트입니다.
-              </div>
-            </div>
+            <!-- Lightweight Chart Target Element -->
+            <div id="chartContainer" class="w-full h-[430px] rounded-xl overflow-hidden"></div>
 
-            <!-- Chart Footer Legend & Explanations -->
-            <div class="flex justify-between items-center text-[11px] text-slate-400 pt-3 border-t border-slate-800 mt-2">
+            <!-- Bottom Navigation Guide -->
+            <div class="flex justify-between items-center text-[11px] text-slate-400 pt-2 border-t border-slate-800 px-1">
               <div class="flex items-center gap-3">
-                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-rose-500 rounded-sm inline-block"></span>상승(양봉)</span>
-                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-blue-500 rounded-sm inline-block"></span>하락(음봉)</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-rose-500 rounded-sm"></span>상승(양봉)</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-blue-500 rounded-sm"></span>하락(음봉)</span>
                 <span class="text-slate-500">|</span>
-                <span class="text-slate-300">이동평균: <span class="text-rose-400 font-mono">5일</span> · <span class="text-amber-400 font-mono">20일</span> · <span class="text-emerald-400 font-mono">60일</span></span>
-                <span class="text-slate-500">|</span>
-                <span class="text-slate-300">하단: 거래량 히스토그램</span>
+                <span class="text-emerald-400 font-semibold">🎯 목표 익절선</span>
+                <span class="text-amber-400 font-semibold">⭐ 기준 매수선</span>
+                <span class="text-blue-400 font-semibold">🛑 손절 방어선</span>
               </div>
               <div class="text-[10px] text-slate-500">
-                차트 위에 마우스를 올리면 날짜별 시/고/저/종 상세 데이터가 십자선과 함께 표시됩니다.
+                우측 가격축이나 하단 시간축을 잡고 드래그하면 세로/가로 스케일도 자유롭게 압축/확대할 수 있습니다.
               </div>
             </div>
 
@@ -600,15 +633,33 @@
     let watchlistData = [];
     let currentSelectedCode = "005930";
     let currentStatusFilter = "ALL";
-    let currentChartEngine = "interactive"; // 'interactive' or 'official'
-    let currentInteractiveTf = "day";      // 'day', 'week', 'intraday'
-    let currentOfficialTf = "day";
+    let currentCandleDays = 120; // 30, 60, 120, 250
     let isSimulating = true;
     let simInterval = null;
     let autoSyncTimer = null;
     let selectedKrxItem = null;
-    let cachedCandles = {};
-    let mousePos = null;
+
+    // Chart Object References
+    let lwChart = null;
+    let candleSeries = null;
+    let volumeSeries = null;
+    let ma5Series = null;
+    let ma20Series = null;
+    let ma60Series = null;
+    let bbUpperSeries = null;
+    let bbLowerSeries = null;
+    let targetPriceLine = null;
+    let basePriceLine = null;
+    let stopPriceLine = null;
+
+    // Indicator Visibility Flags
+    let indicatorState = {
+      ma5: true,
+      ma20: true,
+      ma60: true,
+      bb: false,
+      vol: true
+    };
 
     // Default Initial Watchlist
     const defaultWatchlist = [
@@ -798,8 +849,8 @@
         triggerSheetSync();
       }
 
-      // Setup Canvas Mouse Listeners
-      setupCanvasListeners();
+      // 4. Initialize Lightweight Chart Canvas
+      initLightweightChart();
 
       // Render
       renderWatchlist();
@@ -946,394 +997,359 @@
       const gaugeWidth = Math.min(100, Math.max(10, 100 - (Math.abs(statusInfo.gapPercent) * 15)));
       document.getElementById("detailGaugeBar").style.width = `${gaugeWidth}%`;
 
-      document.getElementById("legendBuyPrice").innerText = Number(stock.basePrice).toLocaleString();
-      document.getElementById("legendTargetPrice").innerText = Number(stock.targetPrice || stock.basePrice * 1.08).toLocaleString();
-      document.getElementById("legendStopPrice").innerText = Number(stock.stopPrice || stock.basePrice * 0.96).toLocaleString();
-
+      // Update Steppers & Calculations
       const targetP = stock.targetPrice || Math.round(stock.basePrice * 1.08);
       const stopP = stock.stopPrice || Math.round(stock.basePrice * 0.96);
+      document.getElementById("stepperTarget").innerText = Number(targetP).toLocaleString();
+      document.getElementById("stepperBase").innerText = Number(stock.basePrice).toLocaleString();
+      document.getElementById("stepperStop").innerText = Number(stopP).toLocaleString();
+
       const risk = stock.basePrice - stopP;
       const reward = targetP - stock.basePrice;
       const rr = (reward > 0 && risk > 0) ? (reward / risk).toFixed(1) : "2.5";
-      document.getElementById("detailRR").innerText = `1 : ${rr}`;
+      document.getElementById("stepperRR").innerText = `1 : ${rr}`;
 
       document.getElementById("sheetMemoInput").value = stock.memo || "";
       document.getElementById("detailForeign").innerText = stock.foreign || "+54,000 주";
       document.getElementById("detailInst").innerText = stock.institution || "+28,000 주";
       document.getElementById("detailVolumeWon").innerText = stock.volumeWon || "1,200 억";
 
-      // Render Active Chart Engine
-      if (currentChartEngine === "interactive") {
-        renderInteractiveCanvasChart(stock);
-      } else {
-        updateOfficialChartImage(stock.code);
-      }
+      // Render on Lightweight Charts
+      renderStockToLightweightChart(stock);
 
       renderWatchlist();
     }
 
-    // Chart Mode Switcher
-    function setChartEngine(engine) {
-      currentChartEngine = engine;
-      const intBtn = document.getElementById("chartModeInteractiveBtn");
-      const offBtn = document.getElementById("chartModeOfficialBtn");
-      const intWrap = document.getElementById("interactiveChartWrap");
-      const offWrap = document.getElementById("officialChartWrap");
-      const intTabs = document.getElementById("interactiveTfTabs");
-      const offTabs = document.getElementById("officialTfTabs");
+    // ==================== LIGHTWEIGHT CHARTS SETUP & RENDERING ====================
+    function initLightweightChart() {
+      const container = document.getElementById("chartContainer");
+      if (!container || typeof LightweightCharts === 'undefined') return;
 
-      if (engine === "interactive") {
-        intBtn.className = "px-3 py-1.5 rounded bg-amber-500 text-black font-bold flex items-center gap-1.5 transition";
-        offBtn.className = "px-3 py-1.5 rounded text-slate-400 hover:text-white flex items-center gap-1.5 transition";
-        intWrap.classList.remove("hidden");
-        offWrap.classList.add("hidden");
-        intTabs.classList.remove("hidden");
-        offTabs.classList.add("hidden");
-        const stock = watchlistData.find(s => s.code === currentSelectedCode);
-        if (stock) renderInteractiveCanvasChart(stock);
-      } else {
-        intBtn.className = "px-3 py-1.5 rounded text-slate-400 hover:text-white flex items-center gap-1.5 transition";
-        offBtn.className = "px-3 py-1.5 rounded bg-amber-500 text-black font-bold flex items-center gap-1.5 transition";
-        intWrap.classList.add("hidden");
-        offWrap.classList.remove("hidden");
-        intTabs.classList.add("hidden");
-        offTabs.classList.remove("hidden");
-        updateOfficialChartImage(currentSelectedCode);
-      }
-    }
+      container.innerHTML = ""; // clean
 
-    function setInteractiveTf(tf) {
-      currentInteractiveTf = tf;
-      ['day', 'week', 'intraday'].forEach(k => {
-        const btn = document.getElementById(`tf${k.charAt(0).toUpperCase() + k.slice(1)}`);
-        if (btn) {
-          btn.className = (k === tf) 
-            ? "px-2.5 py-1 rounded bg-slate-700 text-amber-300 font-bold" 
-            : "px-2.5 py-1 rounded text-slate-400 hover:text-white";
+      lwChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 430,
+        layout: {
+          background: { type: 'solid', color: '#1e293b' },
+          textColor: '#94a3b8',
+          fontSize: 11,
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+        },
+        grid: {
+          vertLines: { color: 'rgba(51, 65, 85, 0.35)' },
+          horzLines: { color: 'rgba(51, 65, 85, 0.35)' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: 'rgba(245, 158, 11, 0.6)', width: 1, style: 3 },
+          horzLine: { color: 'rgba(245, 158, 11, 0.6)', width: 1, style: 3 },
+        },
+        rightPriceScale: {
+          borderColor: '#334155',
+          scaleMargins: { top: 0.1, bottom: 0.22 },
+        },
+        timeScale: {
+          borderColor: '#334155',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        handleScroll: {
+          mouseWheel: true,
+          pressedMouseMove: true,
+          horzTouchDrag: true,
+          vertTouchDrag: true,
+        },
+        handleScale: {
+          axisPressedMouseMove: true,
+          mouseWheel: true,
+          pinch: true,
+        },
+      });
+
+      // 1. Candlestick Series (Korean Colors: Red Up, Blue Down)
+      candleSeries = lwChart.addCandlestickSeries({
+        upColor: '#ef4444',
+        downColor: '#3b82f6',
+        borderUpColor: '#ef4444',
+        borderDownColor: '#3b82f6',
+        wickUpColor: '#ef4444',
+        wickDownColor: '#3b82f6',
+      });
+
+      // 2. Volume Series (Histogram at bottom)
+      volumeSeries = lwChart.addHistogramSeries({
+        priceFormat: { type: 'volume' },
+        priceScaleId: '', // overlay
+      });
+      volumeSeries.priceScale().applyOptions({
+        scaleMargins: { top: 0.8, bottom: 0 },
+      });
+
+      // 3. Moving Average Series
+      ma5Series = lwChart.addLineSeries({
+        color: '#f87171',
+        lineWidth: 1.5,
+        title: 'MA5',
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+
+      ma20Series = lwChart.addLineSeries({
+        color: '#fbbf24',
+        lineWidth: 1.5,
+        title: 'MA20',
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+
+      ma60Series = lwChart.addLineSeries({
+        color: '#34d399',
+        lineWidth: 1.5,
+        title: 'MA60',
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+
+      // 4. Bollinger Bands (20, 2)
+      bbUpperSeries = lwChart.addLineSeries({
+        color: 'rgba(192, 132, 252, 0.85)',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        title: 'BB 상단',
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+
+      bbLowerSeries = lwChart.addLineSeries({
+        color: 'rgba(192, 132, 252, 0.85)',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        title: 'BB 하단',
+        lastValueVisible: false,
+        priceLineVisible: false,
+      });
+
+      // Crosshair Movement Listener (Updates floating legend)
+      lwChart.subscribeCrosshairMove(param => {
+        if (!param || !param.time || !param.seriesData) return;
+        const candle = param.seriesData.get(candleSeries);
+        const vol = param.seriesData.get(volumeSeries);
+        if (candle) {
+          document.getElementById("legDate").innerText = param.time;
+          document.getElementById("legOpen").innerText = Number(candle.open).toLocaleString();
+          document.getElementById("legHigh").innerText = Number(candle.high).toLocaleString();
+          document.getElementById("legLow").innerText = Number(candle.low).toLocaleString();
+          document.getElementById("legClose").innerText = Number(candle.close).toLocaleString();
+          if (vol) document.getElementById("legVol").innerText = Number(vol.value).toLocaleString() + " 주";
         }
       });
-      // Invalidate cache for new timeframe
-      delete cachedCandles[`${currentSelectedCode}_${tf}`];
-      const stock = watchlistData.find(s => s.code === currentSelectedCode);
-      if (stock) renderInteractiveCanvasChart(stock);
     }
 
-    function setOfficialTf(tf) {
-      currentOfficialTf = tf;
-      ['day', 'week', 'month', 'area'].forEach(k => {
-        const btn = document.getElementById(`off${k.charAt(0).toUpperCase() + k.slice(1)}`);
-        if (btn) {
-          btn.className = (k === tf)
-            ? "px-2.5 py-1 rounded bg-slate-700 text-amber-300 font-bold"
-            : "px-2.5 py-1 rounded text-slate-400 hover:text-white";
-        }
-      });
-      updateOfficialChartImage(currentSelectedCode);
-    }
-
-    function updateOfficialChartImage(code) {
-      const img = document.getElementById("officialChartImg");
-      const ts = Date.now();
-      let url = "";
-      if (currentOfficialTf === "day") {
-        url = `https://ssl.pstatic.net/imgfinance/chart/item/candle/day/${code}.png?v=${ts}`;
-      } else if (currentOfficialTf === "week") {
-        url = `https://ssl.pstatic.net/imgfinance/chart/item/candle/week/${code}.png?v=${ts}`;
-      } else if (currentOfficialTf === "month") {
-        url = `https://ssl.pstatic.net/imgfinance/chart/item/candle/month/${code}.png?v=${ts}`;
-      } else {
-        url = `https://ssl.pstatic.net/imgfinance/chart/item/area/day/${code}.png?v=${ts}`;
-      }
-      img.src = url;
-    }
-
-    // ==================== INTERACTIVE CANVAS CANDLESTICK ENGINE ====================
-    function generateCandles(stock, count = 38) {
-      const cacheKey = `${stock.code}_${currentInteractiveTf}`;
-      if (cachedCandles[cacheKey]) return cachedCandles[cacheKey];
-
+    // Generate Realistic Historical OHLCV Series for Given Days
+    function generateStockCandles(stock, days = 120) {
       const candles = [];
-      const now = new Date();
-      let currentP = stock.currentPrice;
-      const baseTrend = (stock.currentPrice - stock.basePrice) * 0.05;
+      const volume = [];
+      const ma5 = [];
+      const ma20 = [];
+      const ma60 = [];
+      const bbUp = [];
+      const bbLow = [];
 
-      // Deterministic seed based on code
+      const now = new Date();
       let seed = 0;
       for (let i = 0; i < stock.code.length; i++) seed += stock.code.charCodeAt(i);
 
-      let prevClose = stock.basePrice * 0.95;
+      let prevClose = stock.basePrice * 0.88;
+      const step = (stock.currentPrice - prevClose) / (days - 1);
 
-      for (let i = 0; i < count; i++) {
-        const progress = i / (count - 1);
-        const wave = Math.sin((i + seed) * 0.6) * (stock.basePrice * 0.015);
-        const rand = (Math.sin((i * 13 + seed)) * 0.5) * (stock.basePrice * 0.018);
+      // Raw candle array
+      const raw = [];
+      for (let i = 0; i < days; i++) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - (days - 1 - i));
+        // Skip weekends
+        if (d.getDay() === 0 || d.getDay() === 6) continue;
 
-        let close = (i === count - 1) 
-          ? stock.currentPrice 
-          : prevClose + wave + rand + (baseTrend * progress);
+        const timeStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
 
+        const wave = Math.sin((i + seed) * 0.4) * (stock.basePrice * 0.02);
+        const noise = (Math.sin(i * 7 + seed)) * (stock.basePrice * 0.015);
+        let close = (i === days - 1) ? stock.currentPrice : prevClose + step + wave + noise;
         close = Math.round(close);
+
         const open = Math.round(prevClose + (Math.cos(i + seed) * (stock.basePrice * 0.008)));
         const high = Math.round(Math.max(open, close) + Math.abs(Math.sin(i * 3 + seed)) * (stock.basePrice * 0.012));
         const low = Math.round(Math.min(open, close) - Math.abs(Math.cos(i * 3 + seed)) * (stock.basePrice * 0.012));
-        const vol = Math.round(200000 + Math.abs(Math.sin(i * 5 + seed)) * 800000 + (i === count - 1 ? 500000 : 0));
+        const vol = Math.round(150000 + Math.abs(Math.sin(i * 5 + seed)) * 950000);
 
-        // Format Date
-        const d = new Date(now);
-        if (currentInteractiveTf === "day") {
-          d.setDate(d.getDate() - (count - 1 - i));
-        } else if (currentInteractiveTf === "week") {
-          d.setDate(d.getDate() - (count - 1 - i) * 7);
-        } else {
-          d.setMinutes(d.getMinutes() - (count - 1 - i) * 15);
-        }
-        const dateStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
-
-        candles.push({ date: dateStr, open, high, low, close, volume: vol });
+        raw.push({ time: timeStr, open, high, low, close, volume: vol });
         prevClose = close;
       }
 
-      // Calculate Moving Averages (MA5, MA20, MA60)
-      for (let i = 0; i < candles.length; i++) {
-        candles[i].ma5 = calcMA(candles, i, 5);
-        candles[i].ma20 = calcMA(candles, i, 20);
-        candles[i].ma60 = calcMA(candles, i, 60);
+      // Compute Series
+      for (let i = 0; i < raw.length; i++) {
+        const r = raw[i];
+        candles.push({ time: r.time, open: r.open, high: r.high, low: r.low, close: r.close });
+        
+        const isUp = r.close >= r.open;
+        volume.push({
+          time: r.time,
+          value: r.volume,
+          color: isUp ? 'rgba(239, 68, 68, 0.45)' : 'rgba(59, 130, 246, 0.45)'
+        });
+
+        // Moving Averages
+        if (i >= 4) {
+          const m5 = raw.slice(i - 4, i + 1).reduce((acc, c) => acc + c.close, 0) / 5;
+          ma5.push({ time: r.time, value: m5 });
+        }
+        if (i >= 19) {
+          const slice20 = raw.slice(i - 19, i + 1).map(c => c.close);
+          const m20 = slice20.reduce((acc, v) => acc + v, 0) / 20;
+          ma20.push({ time: r.time, value: m20 });
+
+          // Standard Deviation for Bollinger Bands
+          const variance = slice20.reduce((acc, v) => acc + Math.pow(v - m20, 2), 0) / 20;
+          const stdDev = Math.sqrt(variance);
+          bbUp.push({ time: r.time, value: m20 + 2 * stdDev });
+          bbLow.push({ time: r.time, value: m20 - 2 * stdDev });
+        }
+        if (i >= 59) {
+          const m60 = raw.slice(i - 59, i + 1).reduce((acc, c) => acc + c.close, 0) / 60;
+          ma60.push({ time: r.time, value: m60 });
+        }
       }
 
-      cachedCandles[cacheKey] = candles;
-      return candles;
+      return { candles, volume, ma5, ma20, ma60, bbUp, bbLow };
     }
 
-    function calcMA(data, index, period) {
-      if (index < period - 1) return null;
-      let sum = 0;
-      for (let j = index - period + 1; j <= index; j++) sum += data[j].close;
-      return sum / period;
-    }
+    function renderStockToLightweightChart(stock) {
+      if (!lwChart || !candleSeries) return;
 
-    function renderInteractiveCanvasChart(stock) {
-      const canvas = document.getElementById("stockCanvas");
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
+      const data = generateStockCandles(stock, currentCandleDays);
 
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
+      // Populate Candle & Volume
+      candleSeries.setData(data.candles);
+      volumeSeries.setData(indicatorState.vol ? data.volume : []);
 
-      const width = rect.width;
-      const height = rect.height;
+      // Populate Moving Averages
+      ma5Series.setData(indicatorState.ma5 ? data.ma5 : []);
+      ma20Series.setData(indicatorState.ma20 ? data.ma20 : []);
+      ma60Series.setData(indicatorState.ma60 ? data.ma60 : []);
 
-      ctx.clearRect(0, 0, width, height);
+      // Populate Bollinger Bands
+      bbUpperSeries.setData(indicatorState.bb ? data.bbUp : []);
+      bbLowerSeries.setData(indicatorState.bb ? data.bbLow : []);
 
-      const candles = generateCandles(stock);
+      // Draw 3 Strategic Lines (Target, Base, Stop)
+      if (targetPriceLine) candleSeries.removePriceLine(targetPriceLine);
+      if (basePriceLine) candleSeries.removePriceLine(basePriceLine);
+      if (stopPriceLine) candleSeries.removePriceLine(stopPriceLine);
+
       const targetP = stock.targetPrice || Math.round(stock.basePrice * 1.08);
       const stopP = stock.stopPrice || Math.round(stock.basePrice * 0.96);
 
-      // Price Bounds
-      const allPrices = candles.flatMap(c => [c.high, c.low]).concat([stock.basePrice, targetP, stopP, stock.currentPrice]);
-      const minP = Math.min(...allPrices) * 0.985;
-      const maxP = Math.max(...allPrices) * 1.015;
-
-      const chartTop = 25;
-      const chartBottom = height - 90; // reserve bottom 70px for volume
-      const chartH = chartBottom - chartTop;
-
-      const getY = (price) => chartBottom - ((price - minP) / (maxP - minP)) * chartH;
-
-      // Draw Background Grid
-      ctx.strokeStyle = "rgba(51, 65, 85, 0.4)";
-      ctx.lineWidth = 1;
-      for (let p = 0; p <= 4; p++) {
-        const y = chartTop + chartH * (p / 4);
-        ctx.beginPath();
-        ctx.moveTo(35, y);
-        ctx.lineTo(width - 75, y);
-        ctx.stroke();
-
-        const pVal = maxP - (p / 4) * (maxP - minP);
-        ctx.fillStyle = "#64748b";
-        ctx.font = "10px monospace";
-        ctx.textAlign = "left";
-        ctx.fillText(Math.round(pVal).toLocaleString(), width - 70, y + 3);
-      }
-
-      // Draw 3 Strategic Lines (Golden Lines)
-      // 1. Target Price (Green dashed)
-      const targetY = getY(targetP);
-      ctx.setLineDash([5, 4]);
-      ctx.strokeStyle = "#34d399";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(35, targetY);
-      ctx.lineTo(width - 75, targetY);
-      ctx.stroke();
-      ctx.fillStyle = "#34d399";
-      ctx.font = "bold 10px monospace";
-      ctx.fillText(`🎯 목표가 ${Number(targetP).toLocaleString()}`, 40, targetY - 5);
-
-      // 2. Base Price (Golden Yellow solid)
-      const baseY = getY(stock.basePrice);
-      ctx.setLineDash([]);
-      ctx.strokeStyle = "#f59e0b";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(35, baseY);
-      ctx.lineTo(width - 75, baseY);
-      ctx.stroke();
-      ctx.fillStyle = "#f59e0b";
-      ctx.font = "bold 10px monospace";
-      ctx.fillText(`⭐ 기준가 ${Number(stock.basePrice).toLocaleString()}`, 40, baseY - 5);
-
-      // 3. Stop-Loss Price (Blue dashed)
-      const stopY = getY(stopP);
-      ctx.setLineDash([5, 4]);
-      ctx.strokeStyle = "#60a5fa";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(35, stopY);
-      ctx.lineTo(width - 75, stopY);
-      ctx.stroke();
-      ctx.fillStyle = "#60a5fa";
-      ctx.font = "bold 10px monospace";
-      ctx.fillText(`🛑 손절가 ${Number(stopP).toLocaleString()}`, 40, stopY - 5);
-      ctx.setLineDash([]);
-
-      // Volume Section
-      const volTop = height - 70;
-      const volH = 55;
-      const maxVol = Math.max(...candles.map(c => c.volume)) * 1.15;
-
-      // Draw Candles & Volume
-      const numC = candles.length;
-      const candleAreaW = width - 120;
-      const slotW = candleAreaW / numC;
-      const candleW = Math.max(3, slotW * 0.7);
-
-      for (let i = 0; i < numC; i++) {
-        const c = candles[i];
-        const x = 45 + i * slotW;
-        const oY = getY(c.open);
-        const cY = getY(c.close);
-        const hY = getY(c.high);
-        const lY = getY(c.low);
-
-        const isUp = c.close >= c.open;
-        const color = isUp ? "#ef4444" : "#3b82f6"; // Red: Up, Blue: Down
-
-        // Wick
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(x + candleW / 2, hY);
-        ctx.lineTo(x + candleW / 2, lY);
-        ctx.stroke();
-
-        // Body
-        ctx.fillStyle = color;
-        const bodyTop = Math.min(oY, cY);
-        const bodyH = Math.max(2, Math.abs(cY - oY));
-        ctx.fillRect(x, bodyTop, candleW, bodyH);
-
-        // Volume Bar
-        const vH = (c.volume / maxVol) * volH;
-        ctx.fillStyle = isUp ? "rgba(239, 68, 68, 0.45)" : "rgba(59, 130, 246, 0.45)";
-        ctx.fillRect(x, height - 15 - vH, candleW, vH);
-      }
-
-      // Draw Moving Averages Lines
-      drawMALine(ctx, candles, "ma5", "#f87171", slotW, candleW, getY);
-      drawMALine(ctx, candles, "ma20", "#fbbf24", slotW, candleW, getY);
-      drawMALine(ctx, candles, "ma60", "#34d399", slotW, candleW, getY);
-
-      // Crosshair Hover Interaction
-      if (mousePos && mousePos.x >= 40 && mousePos.x <= width - 75 && mousePos.y >= chartTop && mousePos.y <= height - 15) {
-        // Vertical line
-        ctx.strokeStyle = "rgba(148, 163, 184, 0.6)";
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath();
-        ctx.moveTo(mousePos.x, chartTop);
-        ctx.lineTo(mousePos.x, height - 15);
-        ctx.stroke();
-
-        // Horizontal line
-        ctx.beginPath();
-        ctx.moveTo(35, mousePos.y);
-        ctx.lineTo(width - 75, mousePos.y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Find nearest candle
-        const nearestIdx = Math.min(numC - 1, Math.max(0, Math.round((mousePos.x - 45) / slotW)));
-        const hoveredCandle = candles[nearestIdx];
-        if (hoveredCandle) {
-          updateChartTooltip(hoveredCandle, mousePos.x, mousePos.y);
-        }
-      } else {
-        const tt = document.getElementById("chartTooltip");
-        if (tt) tt.classList.add("hidden");
-      }
-    }
-
-    function drawMALine(ctx, candles, key, color, slotW, candleW, getY) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.3;
-      ctx.beginPath();
-      let started = false;
-      for (let i = 0; i < candles.length; i++) {
-        const val = candles[i][key];
-        if (val !== null) {
-          const x = 45 + i * slotW + candleW / 2;
-          const y = getY(val);
-          if (!started) {
-            ctx.moveTo(x, y);
-            started = true;
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-      }
-      ctx.stroke();
-    }
-
-    function setupCanvasListeners() {
-      const canvas = document.getElementById("stockCanvas");
-      if (!canvas) return;
-
-      canvas.addEventListener("mousemove", (e) => {
-        const rect = canvas.getBoundingClientRect();
-        mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-        const stock = watchlistData.find(s => s.code === currentSelectedCode);
-        if (stock && currentChartEngine === "interactive") {
-          renderInteractiveCanvasChart(stock);
-        }
+      // 1. Target Line
+      targetPriceLine = candleSeries.createPriceLine({
+        price: targetP,
+        color: '#10b981',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: '🎯 익절 목표',
       });
 
-      canvas.addEventListener("mouseleave", () => {
-        mousePos = null;
-        const tt = document.getElementById("chartTooltip");
-        if (tt) tt.classList.add("hidden");
-        const stock = watchlistData.find(s => s.code === currentSelectedCode);
-        if (stock && currentChartEngine === "interactive") {
-          renderInteractiveCanvasChart(stock);
+      // 2. Base Line
+      basePriceLine = candleSeries.createPriceLine({
+        price: stock.basePrice,
+        color: '#f59e0b',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true,
+        title: '⭐ 기준 매수',
+      });
+
+      // 3. Stop Line
+      stopPriceLine = candleSeries.createPriceLine({
+        price: stopP,
+        color: '#3b82f6',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: '🛑 손절 방어',
+      });
+
+      // Update Legend initial value
+      if (data.candles.length > 0) {
+        const last = data.candles[data.candles.length - 1];
+        document.getElementById("legDate").innerText = last.time;
+        document.getElementById("legOpen").innerText = Number(last.open).toLocaleString();
+        document.getElementById("legHigh").innerText = Number(last.high).toLocaleString();
+        document.getElementById("legLow").innerText = Number(last.low).toLocaleString();
+        document.getElementById("legClose").innerText = Number(last.close).toLocaleString();
+        document.getElementById("legVol").innerText = "최근 영업일";
+      }
+
+      lwChart.timeScale().fitContent();
+    }
+
+    // Time Range Switcher (1M, 3M, 6M, 1Y)
+    function setCandleRange(days) {
+      currentCandleDays = days;
+      [30, 60, 120, 250].forEach(d => {
+        const btn = document.getElementById(`range${d}`);
+        if (btn) {
+          btn.className = (d === days)
+            ? "px-2.5 py-1 rounded bg-amber-500 text-black font-bold transition"
+            : "px-2.5 py-1 rounded text-slate-400 hover:text-white transition";
         }
+      });
+      const stock = watchlistData.find(s => s.code === currentSelectedCode);
+      if (stock) renderStockToLightweightChart(stock);
+    }
+
+    // Zoom Controls
+    function zoomChart(delta) {
+      if (!lwChart) return;
+      const ts = lwChart.timeScale();
+      const logicalRange = ts.getVisibleLogicalRange();
+      if (!logicalRange) return;
+      const span = logicalRange.to - logicalRange.from;
+      const change = span * 0.25 * delta;
+      ts.setVisibleLogicalRange({
+        from: logicalRange.from - change,
+        to: logicalRange.to + change,
       });
     }
 
-    function updateChartTooltip(c, x, y) {
-      const tt = document.getElementById("chartTooltip");
-      if (!tt) return;
-      tt.classList.remove("hidden");
-      tt.style.left = `${Math.min(x + 15, window.innerWidth - 220)}px`;
-      tt.style.top = `${Math.max(10, y - 40)}px`;
+    function resetChartZoom() {
+      if (lwChart) lwChart.timeScale().fitContent();
+    }
 
-      document.getElementById("ttDate").innerText = c.date;
-      document.getElementById("ttOpen").innerText = c.open.toLocaleString();
-      document.getElementById("ttHigh").innerText = c.high.toLocaleString();
-      document.getElementById("ttLow").innerText = c.low.toLocaleString();
-      document.getElementById("ttClose").innerText = c.close.toLocaleString();
-      document.getElementById("ttVol").innerText = c.volume.toLocaleString() + " 주";
+    // Toggle Indicators
+    function toggleIndicator(type, isChecked) {
+      indicatorState[type] = isChecked;
+      const stock = watchlistData.find(s => s.code === currentSelectedCode);
+      if (stock) renderStockToLightweightChart(stock);
+      showToast(`'${type.toUpperCase()}' 보조지표가 ${isChecked ? '활성화' : '숨김'}되었습니다.`);
+    }
+
+    // Interactive Strategic Stepper Adjustment
+    function adjustStrategyPrice(field, delta) {
+      const stock = watchlistData.find(s => s.code === currentSelectedCode);
+      if (!stock) return;
+
+      if (field === 'target') {
+        stock.targetPrice = (stock.targetPrice || Math.round(stock.basePrice * 1.08)) + delta;
+      } else if (field === 'base') {
+        stock.basePrice = stock.basePrice + delta;
+      } else if (field === 'stop') {
+        stock.stopPrice = (stock.stopPrice || Math.round(stock.basePrice * 0.96)) + delta;
+      }
+
+      saveWatchlistToLocal();
+      selectStock(stock.code);
     }
 
     // ==================== KRX SEARCH AUTOCOMPLETE ====================
@@ -1495,7 +1511,6 @@
         stock.strategy = document.getElementById("editStrategy").value;
         saveWatchlistToLocal();
         closeEditModal();
-        delete cachedCandles[`${stock.code}_${currentInteractiveTf}`];
         selectStock(stock.code);
         showToast(`'${stock.name}' 조건이 저장되었습니다.`);
       }
@@ -1877,9 +1892,12 @@
       }, 3500);
     }
 
+    // Window Resize Responsive
     window.addEventListener("resize", () => {
-      const stock = watchlistData.find(s => s.code === currentSelectedCode);
-      if (stock && currentChartEngine === "interactive") renderInteractiveCanvasChart(stock);
+      const container = document.getElementById("chartContainer");
+      if (lwChart && container) {
+        lwChart.applyOptions({ width: container.clientWidth });
+      }
     });
 
     window.addEventListener("DOMContentLoaded", initApp);
