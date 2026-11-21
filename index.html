@@ -54,7 +54,7 @@
         <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
         <span class="text-slate-400">시트:</span>
         <span id="sheetSyncTime" class="font-mono font-medium text-emerald-400">동기화 활성</span>
-        <button onclick="triggerSheetSync()" title="지금 구글 시트 동기화" class="text-slate-400 hover:text-white transition ml-1">
+        <button onclick="triggerSheetSync(true)" title="지금 구글 시트 동기화" class="text-slate-400 hover:text-white transition ml-1">
           <span id="syncIcon" class="inline-block">🔄</span>
         </button>
       </div>
@@ -185,29 +185,63 @@
         <!-- Chart Section -->
         <section class="p-6 space-y-3">
           
-          <!-- Chart Control Bar & Toolbar -->
-          <div class="bg-[#1e293b] p-3 rounded-2xl border border-[#334155] flex flex-wrap items-center justify-between gap-3 shadow-md">
+          <!-- Chart Header & Mode Tabs -->
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[#334155] pb-2">
+            <div class="flex items-center gap-2">
+              <button id="tabInteractiveChart" onclick="switchChartEngine('interactive')" class="px-3.5 py-1.5 rounded-lg font-bold text-xs bg-amber-500 text-black transition flex items-center gap-1.5 shadow">
+                <span>📊 정밀 캔들 차트 (TradingView)</span>
+              </button>
+              <button id="tabNaverChart" onclick="switchChartEngine('naver')" class="px-3.5 py-1.5 rounded-lg font-medium text-xs bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition flex items-center gap-1.5 border border-slate-700">
+                <span>📈 네이버 공식 종합 차트 (실시간)</span>
+              </button>
+            </div>
             
-            <!-- Group 1: Time Range & Zoom Controls -->
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-bold text-slate-400">기간:</span>
+              <span id="chartDataBadge" class="px-2.5 py-1 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <span>🟢 한국거래소 실거래 데이터 적용 (최대 10년)</span>
+              </span>
+              <a id="btnTradingViewExt" href="https://kr.tradingview.com/chart/?symbol=KRX:005930" target="_blank" class="px-2.5 py-1 rounded text-[11px] font-medium bg-slate-800 text-slate-300 hover:text-white border border-slate-700 flex items-center gap-1">
+                <span>↗️ 트레이딩뷰 웹</span>
+              </a>
+              <a id="btnNaverExt" href="https://finance.naver.com/item/main.naver?code=005930" target="_blank" class="px-2.5 py-1 rounded text-[11px] font-medium bg-slate-800 text-slate-300 hover:text-white border border-slate-700 flex items-center gap-1">
+                <span>↗️ 네이버 증권</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Chart Control Bar & Toolbar (Interactive Mode) -->
+          <div id="interactiveToolbar" class="bg-[#1e293b] p-3 rounded-2xl border border-[#334155] flex flex-wrap items-center justify-between gap-3 shadow-md">
+            
+            <!-- Group 1: Timeframe (일/주/월/전체) & Quick Zoom -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Timeframe Selector -->
+              <span class="text-xs font-bold text-amber-400 flex items-center gap-1">봉 주기:</span>
               <div class="flex bg-[#0f172a] p-0.5 rounded-lg border border-[#334155] text-xs">
-                <button onclick="setCandleRange(30)" id="range30" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">1개월</button>
-                <button onclick="setCandleRange(60)" id="range60" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">3개월</button>
-                <button onclick="setCandleRange(120)" id="range120" class="px-2.5 py-1 rounded bg-amber-500 text-black font-bold transition">6개월</button>
-                <button onclick="setCandleRange(250)" id="range250" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">1년</button>
+                <button onclick="setTimeframe('day')" id="tfDay" class="px-2.5 py-1 rounded bg-amber-500 text-black font-bold transition">일봉</button>
+                <button onclick="setTimeframe('week')" id="tfWeek" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">주봉</button>
+                <button onclick="setTimeframe('month')" id="tfMonth" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">월봉</button>
+                <button onclick="setTimeframe('all')" id="tfAll" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition">전체(10년+)</button>
+              </div>
+
+              <!-- Quick Range Zoom (Number of Candles) -->
+              <span class="text-xs font-bold text-slate-400 ml-1">범위:</span>
+              <div class="flex bg-[#0f172a] p-0.5 rounded-lg border border-[#334155] text-xs">
+                <button onclick="setCandleRange(30)" id="range30" class="px-2 py-1 rounded text-slate-400 hover:text-white transition">30</button>
+                <button onclick="setCandleRange(60)" id="range60" class="px-2 py-1 rounded text-slate-400 hover:text-white transition">60</button>
+                <button onclick="setCandleRange(120)" id="range120" class="px-2 py-1 rounded bg-slate-700 text-white font-bold transition">120</button>
+                <button onclick="setCandleRange(250)" id="range250" class="px-2 py-1 rounded text-slate-400 hover:text-white transition">250</button>
+                <button onclick="setCandleRange(0)" id="rangeAll" class="px-2 py-1 rounded text-slate-400 hover:text-white transition">전체</button>
               </div>
 
               <!-- Zoom & Pan Controls -->
               <div class="flex items-center gap-1 bg-[#0f172a] p-0.5 rounded-lg border border-[#334155] text-xs ml-1">
-                <button onclick="zoomChart(-1)" title="확대 (마우스 휠 위로 스크롤도 가능)" class="px-2 py-1 text-slate-300 hover:text-white font-bold">➕</button>
-                <button onclick="zoomChart(1)" title="축소 (마우스 휠 아래로 스크롤도 가능)" class="px-2 py-1 text-slate-300 hover:text-white font-bold">➖</button>
+                <button onclick="zoomChart(-1)" title="확대 (마우스 휠 위로 스크롤 가능)" class="px-2 py-1 text-slate-300 hover:text-white font-bold">➕</button>
+                <button onclick="zoomChart(1)" title="축소 (마우스 휠 아래로 스크롤 가능)" class="px-2 py-1 text-slate-300 hover:text-white font-bold">➖</button>
                 <button onclick="resetChartZoom()" title="화면 기본 맞춤" class="px-2 py-1 text-slate-300 hover:text-amber-400 font-bold">↺ 초기화</button>
               </div>
 
-              <!-- Quick Pan Hint -->
               <span class="text-[11px] text-slate-400 flex items-center gap-1 ml-2 hidden sm:inline-flex">
-                <span>🖱️ <b>마우스 드래그</b>: 좌우 이동 · <b>휠</b>: 줌 확대/축소</span>
+                <span>🖱️ <b>드래그</b>: 과거 이동 · <b>휠</b>: 줌</span>
               </span>
             </div>
 
@@ -232,7 +266,7 @@
 
               <label class="flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white">
                 <input id="chkBB" type="checkbox" onchange="toggleIndicator('bb', this.checked)" class="accent-purple-400 rounded">
-                <span class="text-purple-300">볼린저밴드(20,2)</span>
+                <span class="text-purple-300">볼린저밴드</span>
               </label>
 
               <label class="flex items-center gap-1 cursor-pointer text-slate-300 hover:text-white">
@@ -244,7 +278,7 @@
           </div>
 
           <!-- Interactive Strategic Price Adjuster Bar (Direct On-Chart Adjustment) -->
-          <div class="bg-[#1e293b]/80 p-2.5 rounded-xl border border-[#334155] flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div id="interactiveStepperBar" class="bg-[#1e293b]/80 p-2.5 rounded-xl border border-[#334155] flex flex-wrap items-center justify-between gap-3 text-xs">
             <div class="flex items-center gap-1 text-slate-300 font-bold">
               <span>🎯 전략 기준선 즉시 조절:</span>
               <span class="text-[10px] text-slate-500 font-normal">(차트 수평선에 실시간 반영)</span>
@@ -283,11 +317,11 @@
             </div>
           </div>
 
-          <!-- Chart Display Box (TradingView Lightweight Charts Mount Point) -->
-          <div class="bg-[#1e293b] rounded-2xl border border-[#334155] p-3 shadow-xl overflow-hidden relative min-h-[460px] flex flex-col justify-between">
+          <!-- Chart Display Box 1: TradingView Lightweight Charts -->
+          <div id="interactiveChartBox" class="bg-[#1e293b] rounded-2xl border border-[#334155] p-3 shadow-xl overflow-hidden relative min-h-[460px] flex flex-col justify-between">
             
             <!-- Real-Time Floating OHLC Legend (Updates dynamically on crosshair hover) -->
-            <div id="chartLegend" class="absolute top-4 left-4 z-10 flex items-center gap-3 text-xs bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 text-slate-300 font-mono shadow-lg pointer-events-none">
+            <div id="chartLegend" class="absolute top-4 left-4 z-10 flex items-center gap-3 text-xs bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 text-slate-300 font-mono shadow-lg pointer-events-none flex-wrap">
               <span id="legDate" class="font-bold text-white">2026-11-20</span>
               <span>시: <b id="legOpen" class="text-slate-100">0</b></span>
               <span>고: <b id="legHigh" class="text-rose-400">0</b></span>
@@ -300,7 +334,7 @@
             <div id="chartContainer" class="w-full h-[430px] rounded-xl overflow-hidden"></div>
 
             <!-- Bottom Navigation Guide -->
-            <div class="flex justify-between items-center text-[11px] text-slate-400 pt-2 border-t border-slate-800 px-1">
+            <div class="flex justify-between items-center text-[11px] text-slate-400 pt-2 border-t border-slate-800 px-1 flex-wrap gap-2">
               <div class="flex items-center gap-3">
                 <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-rose-500 rounded-sm"></span>상승(양봉)</span>
                 <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-blue-500 rounded-sm"></span>하락(음봉)</span>
@@ -310,102 +344,42 @@
                 <span class="text-blue-400 font-semibold">🛑 손절 방어선</span>
               </div>
               <div class="text-[10px] text-slate-500">
-                우측 가격축이나 하단 시간축을 잡고 드래그하면 세로/가로 스케일도 자유롭게 압축/확대할 수 있습니다.
+                우측 가격축이나 하단 시간축을 드래그하여 세로/가로 스케일을 자유롭게 조절할 수 있습니다.
               </div>
             </div>
 
           </div>
 
-          <!-- 3. Bottom Information Tabs / Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
-            <!-- Card 1: Google Sheet Memo & Strategy (Editable) -->
-            <div class="bg-[#1e293b] rounded-xl border border-[#334155] p-4 flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center gap-1.5 text-xs font-bold text-slate-300">
-                    <span>📝 매매 시나리오 / 구글 시트 메모</span>
-                  </div>
-                  <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">로컬 & 시트 연동</span>
-                </div>
-                <div class="relative">
-                  <textarea id="sheetMemoInput" rows="3" class="w-full bg-[#0f172a] border border-[#334155] rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500 resize-none font-sans" placeholder="매매 시나리오 및 진입 근거를 작성하세요..."></textarea>
-                </div>
+          <!-- Chart Display Box 2: Official Naver Financial Live Chart (Default Hidden) -->
+          <div id="naverChartBox" class="bg-[#1e293b] rounded-2xl border border-[#334155] p-4 shadow-xl overflow-hidden hidden flex-col justify-between">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 flex-wrap gap-2">
+              <div class="flex items-center gap-1.5 bg-[#0f172a] p-1 rounded-lg border border-[#334155] text-xs">
+                <button onclick="setNaverChartType('area/day')" id="nvBtn_area_day" class="px-2.5 py-1 rounded text-slate-300 hover:text-white transition">당일 분봉</button>
+                <button onclick="setNaverChartType('candle/day')" id="nvBtn_candle_day" class="px-2.5 py-1 rounded bg-amber-500 text-black font-bold transition">일봉</button>
+                <button onclick="setNaverChartType('candle/week')" id="nvBtn_candle_week" class="px-2.5 py-1 rounded text-slate-300 hover:text-white transition">주봉</button>
+                <button onclick="setNaverChartType('candle/month')" id="nvBtn_candle_month" class="px-2.5 py-1 rounded text-slate-300 hover:text-white transition">월봉</button>
+                <button onclick="setNaverChartType('area/year3')" id="nvBtn_area_year3" class="px-2.5 py-1 rounded text-slate-300 hover:text-white transition">3년</button>
+                <button onclick="setNaverChartType('area/year10')" id="nvBtn_area_year10" class="px-2.5 py-1 rounded text-slate-300 hover:text-white transition">10년(전체)</button>
               </div>
-              <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-800 text-[10px]">
-                <span class="text-slate-500">수정 시 브라우저 및 시트에 반영</span>
-                <button onclick="saveCurrentMemo()" class="px-2.5 py-1 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded font-medium transition">
-                  메모 저장
+
+              <div class="flex items-center gap-2">
+                <button onclick="refreshNaverChart()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 flex items-center gap-1">
+                  <span>🔄 새로고침</span>
                 </button>
+                <span class="text-[11px] text-emerald-400 font-mono">한국거래소(KRX) 공식 시세</span>
               </div>
             </div>
 
-            <!-- Card 2: Notification & Audio Chime Rules -->
-            <div class="bg-[#1e293b] rounded-xl border border-[#334155] p-4 flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <span>🔔 타점 알림 & 사운드 피드백</span>
-                  </span>
-                  <span id="alertStatusBadge" class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">감시 대기 중</span>
-                </div>
-                <div class="space-y-2 text-xs">
-                  <div class="bg-[#0f172a] p-2 rounded-lg border border-slate-800 text-[11px] space-y-1">
-                    <div class="flex justify-between text-slate-400">
-                      <span>도달 시 사운드 알림:</span>
-                      <span class="text-emerald-400 font-medium">활성화 (Web Audio)</span>
-                    </div>
-                    <div class="flex justify-between text-slate-400">
-                      <span>팝업 토스트 알림:</span>
-                      <span class="text-slate-300">기준가 ±0.6% 터치 시</span>
-                    </div>
-                  </div>
-                  <div class="text-[11px] text-slate-400 flex items-center justify-between">
-                    <span>사운드 알림 켜기:</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input id="soundToggle" type="checkbox" checked class="sr-only peer">
-                      <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <button onclick="testNotificationSound()" class="w-full mt-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300 text-[11px] transition">
-                🔊 기준가 도달 비프음 테스트
-              </button>
+            <div class="w-full flex justify-center items-center py-4 bg-slate-900/60 rounded-xl my-3 border border-slate-800/80 min-h-[380px]">
+              <img id="naverChartImg" src="https://ssl.pstatic.net/imgfinance/chart/item/candle/day/005930.png" alt="네이버 공식 실시간 차트" referrerpolicy="no-referrer" class="max-w-full h-auto rounded-lg shadow-lg" />
             </div>
 
-            <!-- Card 3: Key Market & Financial Stats -->
-            <div class="bg-[#1e293b] rounded-xl border border-[#334155] p-4 flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-xs font-bold text-slate-300">📊 핵심 수급 및 거래대금</span>
-                  <span class="text-[10px] text-slate-400 font-mono">KRX 실시간</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-[11px]">
-                  <div class="bg-[#0f172a] p-2 rounded border border-slate-800">
-                    <span class="text-slate-500 block text-[10px]">외국인 순매수</span>
-                    <span id="detailForeign" class="font-bold text-rose-400">+124,500 주</span>
-                  </div>
-                  <div class="bg-[#0f172a] p-2 rounded border border-slate-800">
-                    <span class="text-slate-500 block text-[10px]">기관 순매수</span>
-                    <span id="detailInst" class="font-bold text-emerald-400">+45,200 주</span>
-                  </div>
-                  <div class="bg-[#0f172a] p-2 rounded border border-slate-800">
-                    <span class="text-slate-500 block text-[10px]">거래대금</span>
-                    <span id="detailVolumeWon" class="font-bold text-slate-200">3조 1,193억원</span>
-                  </div>
-                  <div class="bg-[#0f172a] p-2 rounded border border-slate-800">
-                    <span class="text-slate-500 block text-[10px]">시장 구분</span>
-                    <span id="detailMarketType" class="font-mono text-slate-300 text-[10px]">KOSPI 대형주</span>
-                  </div>
-                </div>
-              </div>
-              <div class="text-[10px] text-slate-500 pt-2 text-right">
-                데이터: KRX 실시간 집계
-              </div>
+            <div class="flex justify-between items-center text-[11px] text-slate-400 pt-2 border-t border-slate-800 px-1">
+              <span>기관/외인 매매동향 및 한국거래소 공식 이동평균선(5/20/60/120)이 포함된 종합 차트입니다.</span>
+              <span class="text-[10px] text-slate-500">실시간 체결가 및 등락률 연동</span>
             </div>
-
           </div>
+
         </section>
 
       </main>
@@ -573,7 +547,7 @@
         <div class="flex items-center justify-between p-2 rounded bg-[#0f172a] border border-slate-800 text-[11px]">
           <span class="text-slate-400">30초마다 자동 백그라운드 동기화:</span>
           <label class="relative inline-flex items-center cursor-pointer">
-            <input id="autoSyncToggle" type="checkbox" checked onchange="toggleAutoSync(this.checked)" class="sr-only peer">
+            <input id="autoSyncToggle" type="checkbox" onchange="toggleAutoSync(this.checked)" class="sr-only peer">
             <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
           </label>
         </div>
@@ -631,10 +605,14 @@
     // State
     let krxMasterList = [];
     let watchlistData = [];
+    let historicalCandleMap = {};
     let currentSelectedCode = "005930";
     let currentStatusFilter = "ALL";
-    let currentCandleDays = 120; // 30, 60, 120, 250
-    let isSimulating = true;
+    let currentTimeframe = "day"; // 'day', 'week', 'month', 'all'
+    let currentCandleDays = 120; // 30, 60, 120, 250, 0 (all)
+    let currentChartEngine = "interactive"; // 'interactive', 'naver'
+    let currentNaverChartType = "candle/day";
+    let isSimulating = false;
     let simInterval = null;
     let autoSyncTimer = null;
     let selectedKrxItem = null;
@@ -667,8 +645,8 @@
         code: "005930",
         name: "삼성전자",
         market: "KOSPI",
-        currentPrice: 183400,
-        changeRate: -6.86,
+        currentPrice: 180900,
+        changeRate: -3.83,
         basePrice: 180000,
         targetPrice: 205000,
         stopPrice: 172000,
@@ -788,45 +766,79 @@
         code: "086520",
         name: "에코프로",
         strategyType: "VOLUME_BURST",
-        strategyLabel: "거래량 420% 급증",
-        currentPrice: 84200,
-        changeRate: 5.64,
+        strategyLabel: "거래량 300% 폭증 돌파",
+        currentPrice: 83400,
+        changeRate: 6.78,
         volumeWon: "4,120 억",
-        foreignSupply: "외인 +210,000주",
-        instSupply: "기관 +35,000주",
-        recommendedBase: 83000,
-        recommendedTarget: 98000,
-        recommendedStop: 79000,
-        reason: "바닥권 대량 거래대금 동반 장대양봉 발생"
+        foreignSupply: "외인 +142,000주",
+        instSupply: "기관 -12,000주",
+        recommendedBase: 82000,
+        recommendedTarget: 95000,
+        recommendedStop: 78000,
+        reason: "양극재 리튬 수급 개선 및 장기 박스권 상단 대량거래 돌파"
       },
       {
-        code: "028300",
-        name: "HLB",
-        strategyType: "BREAKOUT",
-        strategyLabel: "신약 승인 재신청 돌파",
-        currentPrice: 88500,
-        changeRate: 3.15,
+        code: "196170",
+        name: "알테오젠",
+        strategyType: "REBOUND",
+        strategyLabel: "전고점 지지선 반등",
+        currentPrice: 382000,
+        changeRate: -0.52,
         volumeWon: "2,840 억",
+        foreignSupply: "외인 +31,000주",
+        instSupply: "기관 +19,000주",
+        recommendedBase: 380000,
+        recommendedTarget: 440000,
+        recommendedStop: 360000,
+        reason: "피하주사(SC) 제형 변경 글로벌 마일스톤 기대감 지지선 안착"
+      },
+      {
+        code: "035720",
+        name: "카카오",
+        strategyType: "OVERSOLD",
+        strategyLabel: "과매도 RSI(28) 반등 타점",
+        currentPrice: 37650,
+        changeRate: 1.48,
+        volumeWon: "980 억",
         foreignSupply: "외인 +45,000주",
-        instSupply: "기관 -12,000주",
-        recommendedBase: 87000,
-        recommendedTarget: 105000,
-        recommendedStop: 82000,
-        reason: "FDA 재심사 기대감에 따른 볼린저밴드 상단 돌파"
+        instSupply: "기관 +52,000주",
+        recommendedBase: 370000,
+        recommendedTarget: 42000,
+        recommendedStop: 35000,
+        reason: "바닥권 다중바닥 및 카카오톡 개편 실적 턴어라운드 진입"
+      },
+      {
+        code: "000270",
+        name: "기아",
+        strategyType: "SUPPORT",
+        strategyLabel: "밸류업 저PBR 지지선",
+        currentPrice: 94500,
+        changeRate: 2.16,
+        volumeWon: "1,650 억",
+        foreignSupply: "외인 +98,000주",
+        instSupply: "기관 +64,000주",
+        recommendedBase: 93500,
+        recommendedTarget: 108000,
+        recommendedStop: 89000,
+        reason: "분기 최대 영업이익 및 배당 성향 확대 매력 부각"
       }
     ];
 
-    // Initialize
-    async function initApp() {
-      // 1. Load KRX master list
+    // ==================== INITIALIZATION ====================
+    window.addEventListener("DOMContentLoaded", () => {
+      init();
+    });
+
+    async function init() {
+      // 1. Load KRX 600 Master List
       try {
         const res = await fetch('krx_stocks.json');
         if (res.ok) {
           krxMasterList = await res.json();
           console.log(`Loaded ${krxMasterList.length} KRX master stocks.`);
         }
-      } catch (e) {
-        console.warn("Could not load krx_stocks.json", e);
+      } catch (err) {
+        console.warn("Could not load krx_stocks.json, fallback to defaults:", err);
       }
 
       // 2. Load Watchlist
@@ -842,21 +854,34 @@
         saveWatchlistToLocal();
       }
 
-      // 3. Saved Sheet
+      // 3. Saved Sheet URL - Populate field if saved, DO NOT auto popup
       const savedSheetUrl = localStorage.getItem('signalstock_sheet_url');
       if (savedSheetUrl) {
-        document.getElementById('sheetUrlInput').value = savedSheetUrl;
-        triggerSheetSync();
+        const urlInput = document.getElementById('sheetUrlInput');
+        if (urlInput) urlInput.value = savedSheetUrl;
+        const timeElem = document.getElementById("sheetSyncTime");
+        if (timeElem) timeElem.innerText = "연동 준비됨";
       }
 
       // 4. Initialize Lightweight Chart Canvas
       initLightweightChart();
 
-      // Render
+      // 5. Render UI
       renderWatchlist();
       selectStock(currentSelectedCode);
-      startSimulation();
-      setupAutoSync();
+
+      // 6. Asynchronously Load Real Historical Candle Data
+      try {
+        const hRes = await fetch('stock_candles_history.json');
+        if (hRes.ok) {
+          historicalCandleMap = await hRes.json();
+          console.log(`Loaded real historical candles for ${Object.keys(historicalCandleMap).length} stocks.`);
+          const stock = watchlistData.find(s => s.code === currentSelectedCode);
+          if (stock) renderStockToLightweightChart(stock);
+        }
+      } catch (err) {
+        console.warn("Could not load stock_candles_history.json:", err);
+      }
     }
 
     function saveWatchlistToLocal() {
@@ -868,136 +893,184 @@
       const gapPercent = ((stock.currentPrice - stock.basePrice) / stock.basePrice) * 100;
       const absGap = Math.abs(gapPercent);
       if (absGap <= 0.6) {
-        return { status: "REACHED", label: "🎯 도달", class: "bg-rose-500/20 text-rose-400 border-rose-500/40", gapPercent };
+        return {
+          status: "REACHED",
+          badgeClass: "badge-reached",
+          badgeText: "🎯 도달",
+          borderClass: "card-reached",
+          gapText: "기준가 터치"
+        };
       } else if (absGap <= (stock.tolerance || 1.5)) {
-        return { status: "NEAR", label: "⚠️ 근접", class: "bg-amber-500/20 text-amber-300 border-amber-500/40", gapPercent };
+        return {
+          status: "NEAR",
+          badgeClass: "badge-near",
+          badgeText: "⚠️ 근접",
+          borderClass: "card-near",
+          gapText: `${gapPercent > 0 ? '+' : ''}${gapPercent.toFixed(1)}% 이격`
+        };
       } else {
-        return { status: "WAIT", label: "👀 관망", class: "bg-slate-700/50 text-slate-400 border-slate-600", gapPercent };
+        return {
+          status: "WAIT",
+          badgeClass: "badge-wait",
+          badgeText: "👀 관망",
+          borderClass: "",
+          gapText: `${gapPercent > 0 ? '+' : ''}${gapPercent.toFixed(1)}% 이격`
+        };
       }
     }
 
+    // ==================== WATCHLIST SIDEBAR RENDERING ====================
     function renderWatchlist() {
-      const container = document.getElementById("stockListContainer");
-      const search = document.getElementById("searchInput").value.toLowerCase();
-      const sortBy = document.getElementById("sortSelect").value;
+      const listContainer = document.getElementById("stockListContainer");
+      if (!listContainer) return;
 
-      let filtered = watchlistData.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(search) || item.code.includes(search) || (item.strategy && item.strategy.toLowerCase().includes(search));
-        if (!matchesSearch) return false;
+      const keyword = document.getElementById("searchKeyword").value.trim().toLowerCase();
 
-        const info = getStockStatus(item);
-        if (currentStatusFilter === "ALL") return true;
-        return info.status === currentStatusFilter;
-      });
-
-      filtered.sort((a, b) => {
-        const infoA = getStockStatus(a);
-        const infoB = getStockStatus(b);
-        if (sortBy === "gap") {
-          return Math.abs(infoA.gapPercent) - Math.abs(infoB.gapPercent);
-        } else if (sortBy === "change") {
-          return b.changeRate - a.changeRate;
-        } else {
-          return a.name.localeCompare(b.name);
-        }
-      });
-
-      let reachedCount = 0;
-      let nearCount = 0;
+      let counts = { ALL: 0, REACHED: 0, NEAR: 0, WAIT: 0 };
       watchlistData.forEach(item => {
-        const s = getStockStatus(item).status;
-        if (s === "REACHED") reachedCount++;
-        if (s === "NEAR") nearCount++;
+        const info = getStockStatus(item);
+        counts.ALL++;
+        if (counts[info.status] !== undefined) counts[info.status]++;
       });
-      document.getElementById("statReached").innerText = reachedCount;
-      document.getElementById("statNear").innerText = nearCount;
-      document.getElementById("badgeWatchCount").innerText = watchlistData.length;
 
-      container.innerHTML = "";
+      document.getElementById("cntAll").innerText = counts.ALL;
+      document.getElementById("cntReached").innerText = counts.REACHED;
+      document.getElementById("cntNear").innerText = counts.NEAR;
+      document.getElementById("cntWait").innerText = counts.WAIT;
+
+      const filtered = watchlistData.filter(item => {
+        const info = getStockStatus(item);
+        const matchFilter = (currentStatusFilter === "ALL") || (info.status === currentStatusFilter);
+        const matchSearch = (!keyword) || 
+                            item.name.toLowerCase().includes(keyword) || 
+                            item.code.includes(keyword) ||
+                            (item.strategy && item.strategy.toLowerCase().includes(keyword));
+        return matchFilter && matchSearch;
+      });
+
+      listContainer.innerHTML = "";
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-xs text-slate-500">부합하는 감시 종목이 없습니다.</div>`;
+        listContainer.innerHTML = `
+          <div class="p-8 text-center text-xs text-slate-500">
+            조건에 부합하는 종목이 없습니다.<br>
+            <span class="text-amber-400 font-semibold cursor-pointer" onclick="openSearchModal()">+ 새 종목 추가하기</span>
+          </div>`;
         return;
       }
 
       filtered.forEach(stock => {
-        const statusInfo = getStockStatus(stock);
+        const info = getStockStatus(stock);
         const isSelected = stock.code === currentSelectedCode;
-        const priceColor = stock.changeRate >= 0 ? "text-rose-500" : "text-blue-400";
         const changeSign = stock.changeRate >= 0 ? "+" : "";
+        const changeColor = stock.changeRate >= 0 ? "text-rose-400" : "text-blue-400";
 
         const card = document.createElement("div");
-        card.id = `card-${stock.code}`;
-        card.className = `p-3 rounded-xl border transition-all cursor-pointer relative group ${
+        card.className = `p-3.5 rounded-xl border cursor-pointer transition-all ${info.borderClass} ${
           isSelected 
-            ? "bg-amber-500/10 border-amber-500/60 shadow-lg shadow-amber-500/5 ring-1 ring-amber-500/30" 
-            : "bg-[#1e293b]/70 hover:bg-[#1e293b] border-[#334155] hover:border-slate-600"
+            ? 'bg-slate-800/90 border-amber-500 shadow-md ring-1 ring-amber-500/50' 
+            : 'bg-[#1e293b]/70 border-[#334155] hover:bg-[#1e293b] hover:border-slate-500'
         }`;
+        card.onclick = () => selectStock(stock.code);
 
         card.innerHTML = `
-          <div onclick="selectStock('${stock.code}')">
-            <div class="flex items-center justify-between mb-1">
-              <div class="flex items-center gap-1.5">
-                <span class="font-bold text-xs ${isSelected ? 'text-amber-300' : 'text-slate-100'}">${stock.name}</span>
-                <span class="text-[10px] font-mono text-slate-400">${stock.code}</span>
-              </div>
-              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusInfo.class}">${statusInfo.label}</span>
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] px-1 py-0.5 rounded font-mono font-semibold ${stock.market === 'KOSDAQ' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-700 text-slate-300'}">${stock.market || 'KRX'}</span>
+              <span class="font-bold text-sm text-white">${stock.name}</span>
+              <span class="text-[11px] font-mono text-slate-400">${stock.code}</span>
             </div>
-            <div class="flex items-baseline justify-between">
-              <div class="flex items-baseline gap-1.5">
-                <span class="font-mono font-bold text-sm ${priceColor}">${Number(stock.currentPrice).toLocaleString()}</span>
-                <span class="font-mono text-[10px] ${priceColor}">${changeSign}${stock.changeRate}%</span>
-              </div>
-              <div class="text-right text-[10px]">
-                <span class="text-slate-500">기준:</span>
-                <span class="font-mono text-amber-400/90 font-medium">${Number(stock.basePrice).toLocaleString()}</span>
-                <span class="font-mono font-bold ${statusInfo.gapPercent >= 0 ? 'text-emerald-400' : 'text-amber-400'} ml-1">
-                  (${statusInfo.gapPercent >= 0 ? '+' : ''}${statusInfo.gapPercent.toFixed(1)}%)
-                </span>
-              </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${info.badgeClass}">
+              ${info.badgeText}
+            </span>
+          </div>
+
+          <div class="mt-2 flex items-baseline justify-between font-mono">
+            <div>
+              <span class="text-sm font-bold text-slate-100">${Number(stock.currentPrice).toLocaleString()}</span>
+              <span class="text-[10px] text-slate-400">원</span>
             </div>
-            <div class="mt-1.5 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-              <span class="truncate max-w-[200px]">💡 ${stock.strategy || '타점 감시'}</span>
-              <span class="text-slate-500 text-[9px]">${stock.type || '매수'}</span>
+            <span class="text-xs font-semibold ${changeColor}">
+              ${changeSign}${stock.changeRate}%
+            </span>
+          </div>
+
+          <div class="mt-2 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+            <div class="text-slate-400">
+              <span>기준:</span>
+              <span class="text-amber-300 font-semibold font-mono">${Number(stock.basePrice).toLocaleString()}원</span>
+            </div>
+            <div class="text-[10px] font-medium ${info.status === 'REACHED' ? 'text-emerald-400 font-bold' : info.status === 'NEAR' ? 'text-amber-400 font-bold' : 'text-slate-500'}">
+              ${info.gapText}
             </div>
           </div>
-          <button onclick="event.stopPropagation(); deleteStock('${stock.code}')" title="삭제" class="absolute top-2 right-2 text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition text-[11px]">
-            ✕
-          </button>
+
+          <div class="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+            <span class="truncate max-w-[190px] text-slate-300">🎯 ${stock.strategy || '기준선 전략'}</span>
+            <div class="flex items-center gap-2">
+              <button onclick="event.stopPropagation(); openEditModal('${stock.code}')" class="text-slate-400 hover:text-white transition" title="수정">✏️</button>
+              <button onclick="event.stopPropagation(); deleteStock('${stock.code}')" class="text-slate-500 hover:text-rose-400 transition" title="삭제">✕</button>
+            </div>
+          </div>
         `;
-        container.appendChild(card);
+        listContainer.appendChild(card);
       });
     }
 
+    function setStatusFilter(filter) {
+      currentStatusFilter = filter;
+      ["ALL", "REACHED", "NEAR", "WAIT"].forEach(f => {
+        const btn = document.getElementById(`filter${f.charAt(0) + f.slice(1).toLowerCase()}`);
+        if (btn) {
+          if (f === filter) {
+            btn.className = "flex-1 py-1.5 rounded-md font-bold text-xs bg-amber-500 text-black transition";
+          } else {
+            btn.className = "flex-1 py-1.5 rounded-md text-xs text-slate-400 hover:text-white transition";
+          }
+        }
+      });
+      renderWatchlist();
+    }
+
+    // ==================== SELECT STOCK & DETAIL VIEW ====================
     function selectStock(code) {
       currentSelectedCode = code;
-      const stock = watchlistData.find(s => s.code === code);
-      if (!stock) return;
+      const stock = watchlistData.find(s => s.code === code) || defaultWatchlist[0];
 
-      document.getElementById("detailName").innerText = stock.name;
-      document.getElementById("detailCode").innerText = stock.code;
-      document.getElementById("detailMarket").innerText = stock.market || "KRX";
-      document.getElementById("detailStrategyBadge").innerText = stock.strategy || "전략 감시";
-      document.getElementById("detailType").innerText = `${stock.type || '매수'} 타점 감시`;
+      // Update Summary Header
+      document.getElementById("detailStockName").innerText = stock.name;
+      document.getElementById("detailStockCode").innerText = stock.code;
+      document.getElementById("detailMarket").innerText = stock.market || "KOSPI";
+      document.getElementById("detailStrategy").innerText = stock.strategy || "설정된 매매 전략";
+      document.getElementById("detailCurrentPrice").innerText = Number(stock.currentPrice).toLocaleString();
 
-      const priceColor = stock.changeRate >= 0 ? "text-rose-500" : "text-blue-400";
       const changeSign = stock.changeRate >= 0 ? "+" : "";
-      const priceElem = document.getElementById("detailPrice");
-      priceElem.innerText = Number(stock.currentPrice).toLocaleString();
-      priceElem.className = `text-2xl font-black font-mono ${priceColor}`;
+      const changeElem = document.getElementById("detailChangeRate");
+      changeElem.innerText = `${changeSign}${stock.changeRate}%`;
+      changeElem.className = `text-sm font-semibold font-mono ${stock.changeRate >= 0 ? 'text-rose-400' : 'text-blue-400'}`;
 
-      const changeElem = document.getElementById("detailChange");
-      changeElem.innerText = `${changeSign}${stock.changeRate}% ${stock.changeRate >= 0 ? '▲' : '▼'}`;
-      changeElem.className = `text-xs font-mono font-bold ${stock.changeRate >= 0 ? 'text-rose-400' : 'text-blue-400'}`;
+      // Reach Gauge
+      const gapPercent = ((stock.currentPrice - stock.basePrice) / stock.basePrice) * 100;
+      const reachProgress = Math.max(10, Math.min(100, Math.round(100 - Math.abs(gapPercent) * 5)));
+      document.getElementById("reachGaugeBar").style.width = `${reachProgress}%`;
+      document.getElementById("reachPercentText").innerText = `${reachProgress}%`;
 
-      const statusInfo = getStockStatus(stock);
-      const gapElem = document.getElementById("detailGapPercent");
-      gapElem.innerText = `${statusInfo.gapPercent >= 0 ? '+' : ''}${statusInfo.gapPercent.toFixed(2)}% (${statusInfo.label})`;
-      gapElem.className = `font-mono font-bold ${statusInfo.gapPercent >= 0 ? 'text-emerald-400' : 'text-amber-400'}`;
+      const gapDiff = stock.currentPrice - stock.basePrice;
+      const gapSign = gapDiff >= 0 ? "+" : "";
+      document.getElementById("reachGapWon").innerText = `${gapSign}${Number(gapDiff).toLocaleString()}원 (${gapSign}${gapPercent.toFixed(1)}%)`;
 
-      const gaugeWidth = Math.min(100, Math.max(10, 100 - (Math.abs(statusInfo.gapPercent) * 15)));
-      document.getElementById("detailGaugeBar").style.width = `${gaugeWidth}%`;
+      // Status Badge
+      const info = getStockStatus(stock);
+      const badgeElem = document.getElementById("detailStatusBadge");
+      badgeElem.className = `text-xs font-bold px-3 py-1 rounded-full ${info.badgeClass}`;
+      badgeElem.innerText = info.badgeText;
 
-      // Update Steppers & Calculations
+      // Update External Links
+      const tvLink = document.getElementById("btnTradingViewExt");
+      if (tvLink) tvLink.href = `https://kr.tradingview.com/chart/?symbol=KRX:${stock.code}`;
+      const nvLink = document.getElementById("btnNaverExt");
+      if (nvLink) nvLink.href = `https://finance.naver.com/item/main.naver?code=${stock.code}`;
+
+      // Steppers & Risk/Reward
       const targetP = stock.targetPrice || Math.round(stock.basePrice * 1.08);
       const stopP = stock.stopPrice || Math.round(stock.basePrice * 0.96);
       document.getElementById("stepperTarget").innerText = Number(targetP).toLocaleString();
@@ -1014,18 +1087,77 @@
       document.getElementById("detailInst").innerText = stock.institution || "+28,000 주";
       document.getElementById("detailVolumeWon").innerText = stock.volumeWon || "1,200 억";
 
-      // Render on Lightweight Charts
-      renderStockToLightweightChart(stock);
+      // Render Active Chart Engine
+      if (currentChartEngine === "interactive") {
+        renderStockToLightweightChart(stock);
+      } else {
+        refreshNaverChart();
+      }
 
       renderWatchlist();
     }
 
-    // ==================== LIGHTWEIGHT CHARTS SETUP & RENDERING ====================
+    // ==================== DUAL CHART ENGINE SWITCHER ====================
+    function switchChartEngine(engine) {
+      currentChartEngine = engine;
+      const tabInteractive = document.getElementById("tabInteractiveChart");
+      const tabNaver = document.getElementById("tabNaverChart");
+      const interactiveToolbar = document.getElementById("interactiveToolbar");
+      const interactiveStepper = document.getElementById("interactiveStepperBar");
+      const interactiveBox = document.getElementById("interactiveChartBox");
+      const naverBox = document.getElementById("naverChartBox");
+
+      if (engine === "interactive") {
+        tabInteractive.className = "px-3.5 py-1.5 rounded-lg font-bold text-xs bg-amber-500 text-black transition flex items-center gap-1.5 shadow";
+        tabNaver.className = "px-3.5 py-1.5 rounded-lg font-medium text-xs bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition flex items-center gap-1.5 border border-slate-700";
+        interactiveToolbar.classList.remove("hidden");
+        interactiveStepper.classList.remove("hidden");
+        interactiveBox.classList.remove("hidden");
+        naverBox.classList.add("hidden");
+
+        const stock = watchlistData.find(s => s.code === currentSelectedCode);
+        if (stock) renderStockToLightweightChart(stock);
+      } else {
+        tabInteractive.className = "px-3.5 py-1.5 rounded-lg font-medium text-xs bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition flex items-center gap-1.5 border border-slate-700";
+        tabNaver.className = "px-3.5 py-1.5 rounded-lg font-bold text-xs bg-amber-500 text-black transition flex items-center gap-1.5 shadow";
+        interactiveToolbar.classList.add("hidden");
+        interactiveStepper.classList.add("hidden");
+        interactiveBox.classList.add("hidden");
+        naverBox.classList.remove("hidden");
+
+        refreshNaverChart();
+      }
+    }
+
+    function setNaverChartType(type) {
+      currentNaverChartType = type;
+      ["area/day", "candle/day", "candle/week", "candle/month", "area/year3", "area/year10"].forEach(t => {
+        const idKey = t.replace('/', '_');
+        const btn = document.getElementById(`nvBtn_${idKey}`);
+        if (btn) {
+          if (t === type) {
+            btn.className = "px-2.5 py-1 rounded bg-amber-500 text-black font-bold transition";
+          } else {
+            btn.className = "px-2.5 py-1 rounded text-slate-300 hover:text-white transition";
+          }
+        }
+      });
+      refreshNaverChart();
+    }
+
+    function refreshNaverChart() {
+      const img = document.getElementById("naverChartImg");
+      if (img) {
+        img.src = `https://ssl.pstatic.net/imgfinance/chart/item/${currentNaverChartType}/${currentSelectedCode}.png?t=${Date.now()}`;
+      }
+    }
+
+    // ==================== LIGHTWEIGHT CHARTS SETUP & DATA ====================
     function initLightweightChart() {
       const container = document.getElementById("chartContainer");
       if (!container || typeof LightweightCharts === 'undefined') return;
 
-      container.innerHTML = ""; // clean
+      container.innerHTML = "";
 
       lwChart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
@@ -1077,10 +1209,10 @@
         wickDownColor: '#3b82f6',
       });
 
-      // 2. Volume Series (Histogram at bottom)
+      // 2. Volume Series
       volumeSeries = lwChart.addHistogramSeries({
         priceFormat: { type: 'volume' },
-        priceScaleId: '', // overlay
+        priceScaleId: '',
       });
       volumeSeries.priceScale().applyOptions({
         scaleMargins: { top: 0.8, bottom: 0 },
@@ -1130,7 +1262,7 @@
         priceLineVisible: false,
       });
 
-      // Crosshair Movement Listener (Updates floating legend)
+      // Crosshair Movement Listener
       lwChart.subscribeCrosshairMove(param => {
         if (!param || !param.time || !param.seriesData) return;
         const candle = param.seriesData.get(candleSeries);
@@ -1146,8 +1278,8 @@
       });
     }
 
-    // Generate Realistic Historical OHLCV Series for Given Days
-    function generateStockCandles(stock, days = 120) {
+    // Retrieve Authentic or Representative Candles
+    function getStockCandles(stock, timeframe = 'day') {
       const candles = [];
       const volume = [];
       const ma5 = [];
@@ -1156,42 +1288,30 @@
       const bbUp = [];
       const bbLow = [];
 
-      const now = new Date();
-      let seed = 0;
-      for (let i = 0; i < stock.code.length; i++) seed += stock.code.charCodeAt(i);
+      let raw = [];
+      const hist = historicalCandleMap[stock.code];
+      const tfKey = timeframe === 'all' ? 'month' : timeframe;
+      const hasAuthentic = hist && hist[tfKey] && hist[tfKey].length > 0;
 
-      let prevClose = stock.basePrice * 0.88;
-      const step = (stock.currentPrice - prevClose) / (days - 1);
-
-      // Raw candle array
-      const raw = [];
-      for (let i = 0; i < days; i++) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - (days - 1 - i));
-        // Skip weekends
-        if (d.getDay() === 0 || d.getDay() === 6) continue;
-
-        const timeStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
-
-        const wave = Math.sin((i + seed) * 0.4) * (stock.basePrice * 0.02);
-        const noise = (Math.sin(i * 7 + seed)) * (stock.basePrice * 0.015);
-        let close = (i === days - 1) ? stock.currentPrice : prevClose + step + wave + noise;
-        close = Math.round(close);
-
-        const open = Math.round(prevClose + (Math.cos(i + seed) * (stock.basePrice * 0.008)));
-        const high = Math.round(Math.max(open, close) + Math.abs(Math.sin(i * 3 + seed)) * (stock.basePrice * 0.012));
-        const low = Math.round(Math.min(open, close) - Math.abs(Math.cos(i * 3 + seed)) * (stock.basePrice * 0.012));
-        const vol = Math.round(150000 + Math.abs(Math.sin(i * 5 + seed)) * 950000);
-
-        raw.push({ time: timeStr, open, high, low, close, volume: vol });
-        prevClose = close;
+      if (hasAuthentic) {
+        raw = hist[tfKey].map(it => ({
+          time: it[0],
+          open: it[1],
+          high: it[2],
+          low: it[3],
+          close: it[4],
+          volume: it[5]
+        }));
+      } else {
+        // Fallback realistic series
+        raw = generateFallbackCandles(stock, timeframe);
       }
 
-      // Compute Series
+      // Compute MAs and BB on full raw dataset
       for (let i = 0; i < raw.length; i++) {
         const r = raw[i];
         candles.push({ time: r.time, open: r.open, high: r.high, low: r.low, close: r.close });
-        
+
         const isUp = r.close >= r.open;
         volume.push({
           time: r.time,
@@ -1199,48 +1319,112 @@
           color: isUp ? 'rgba(239, 68, 68, 0.45)' : 'rgba(59, 130, 246, 0.45)'
         });
 
-        // Moving Averages
         if (i >= 4) {
           const m5 = raw.slice(i - 4, i + 1).reduce((acc, c) => acc + c.close, 0) / 5;
-          ma5.push({ time: r.time, value: m5 });
+          ma5.push({ time: r.time, value: Math.round(m5) });
         }
         if (i >= 19) {
           const slice20 = raw.slice(i - 19, i + 1).map(c => c.close);
           const m20 = slice20.reduce((acc, v) => acc + v, 0) / 20;
-          ma20.push({ time: r.time, value: m20 });
+          ma20.push({ time: r.time, value: Math.round(m20) });
 
-          // Standard Deviation for Bollinger Bands
           const variance = slice20.reduce((acc, v) => acc + Math.pow(v - m20, 2), 0) / 20;
           const stdDev = Math.sqrt(variance);
-          bbUp.push({ time: r.time, value: m20 + 2 * stdDev });
-          bbLow.push({ time: r.time, value: m20 - 2 * stdDev });
+          bbUp.push({ time: r.time, value: Math.round(m20 + 2 * stdDev) });
+          bbLow.push({ time: r.time, value: Math.round(m20 - 2 * stdDev) });
         }
         if (i >= 59) {
           const m60 = raw.slice(i - 59, i + 1).reduce((acc, c) => acc + c.close, 0) / 60;
-          ma60.push({ time: r.time, value: m60 });
+          ma60.push({ time: r.time, value: Math.round(m60) });
         }
       }
 
-      return { candles, volume, ma5, ma20, ma60, bbUp, bbLow };
+      return { candles, volume, ma5, ma20, ma60, bbUp, bbLow, isAuthentic: hasAuthentic };
+    }
+
+    function generateFallbackCandles(stock, timeframe) {
+      const days = timeframe === 'month' ? 120 : timeframe === 'week' ? 200 : 300;
+      const list = [];
+      const now = new Date();
+      let seed = 0;
+      for (let i = 0; i < stock.code.length; i++) seed += stock.code.charCodeAt(i);
+
+      let prevClose = (stock.basePrice || stock.currentPrice) * 0.90;
+      const step = (stock.currentPrice - prevClose) / (days - 1);
+
+      for (let i = 0; i < days; i++) {
+        const d = new Date(now);
+        if (timeframe === 'month') {
+          d.setMonth(d.getMonth() - (days - 1 - i));
+        } else if (timeframe === 'week') {
+          d.setDate(d.getDate() - (days - 1 - i) * 7);
+        } else {
+          d.setDate(d.getDate() - (days - 1 - i));
+          if (d.getDay() === 0 || d.getDay() === 6) continue;
+        }
+
+        const timeStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+        const wave = Math.sin((i + seed) * 0.4) * (stock.currentPrice * 0.02);
+        const noise = Math.sin(i * 7 + seed) * (stock.currentPrice * 0.015);
+        let close = (i === days - 1) ? stock.currentPrice : Math.round(prevClose + step + wave + noise);
+        const open = Math.round(prevClose + Math.cos(i + seed) * (stock.currentPrice * 0.008));
+        const high = Math.round(Math.max(open, close) + Math.abs(Math.sin(i * 3 + seed)) * (stock.currentPrice * 0.012));
+        const low = Math.round(Math.min(open, close) - Math.abs(Math.cos(i * 3 + seed)) * (stock.currentPrice * 0.012));
+        const vol = Math.round(150000 + Math.abs(Math.sin(i * 5 + seed)) * 950000);
+
+        list.push({ time: timeStr, open, high, low, close, volume: vol });
+        prevClose = close;
+      }
+      return list;
     }
 
     function renderStockToLightweightChart(stock) {
       if (!lwChart || !candleSeries) return;
 
-      const data = generateStockCandles(stock, currentCandleDays);
+      const data = getStockCandles(stock, currentTimeframe);
 
-      // Populate Candle & Volume
-      candleSeries.setData(data.candles);
-      volumeSeries.setData(indicatorState.vol ? data.volume : []);
+      // Update Data Badge
+      const badge = document.getElementById("chartDataBadge");
+      if (badge) {
+        if (data.isAuthentic) {
+          const tfKorean = currentTimeframe === 'week' ? '주봉' : currentTimeframe === 'month' ? '월봉' : currentTimeframe === 'all' ? '전체(월봉)' : '일봉';
+          badge.className = "px-2.5 py-1 rounded text-[11px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1";
+          badge.innerHTML = `<span>🟢 한국거래소 실거래 데이터 (${tfKorean} ${data.candles.length}개 봉)</span>`;
+        } else {
+          badge.className = "px-2.5 py-1 rounded text-[11px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1";
+          badge.innerHTML = `<span>⚡ 시세 참조 데이터 (네이버 공식 차트 탭 권장)</span>`;
+        }
+      }
 
-      // Populate Moving Averages
-      ma5Series.setData(indicatorState.ma5 ? data.ma5 : []);
-      ma20Series.setData(indicatorState.ma20 ? data.ma20 : []);
-      ma60Series.setData(indicatorState.ma60 ? data.ma60 : []);
+      // Filter by currentCandleDays if specified (> 0)
+      let displayCandles = data.candles;
+      let displayVolume = data.volume;
+      let displayMa5 = data.ma5;
+      let displayMa20 = data.ma20;
+      let displayMa60 = data.ma60;
+      let displayBbUp = data.bbUp;
+      let displayBbLow = data.bbLow;
 
-      // Populate Bollinger Bands
-      bbUpperSeries.setData(indicatorState.bb ? data.bbUp : []);
-      bbLowerSeries.setData(indicatorState.bb ? data.bbLow : []);
+      if (currentCandleDays > 0 && data.candles.length > currentCandleDays) {
+        const startIdx = data.candles.length - currentCandleDays;
+        const cutoffTime = data.candles[startIdx].time;
+
+        displayCandles = data.candles.slice(startIdx);
+        displayVolume = data.volume.filter(v => v.time >= cutoffTime);
+        displayMa5 = data.ma5.filter(v => v.time >= cutoffTime);
+        displayMa20 = data.ma20.filter(v => v.time >= cutoffTime);
+        displayMa60 = data.ma60.filter(v => v.time >= cutoffTime);
+        displayBbUp = data.bbUp.filter(v => v.time >= cutoffTime);
+        displayBbLow = data.bbLow.filter(v => v.time >= cutoffTime);
+      }
+
+      candleSeries.setData(displayCandles);
+      volumeSeries.setData(indicatorState.vol ? displayVolume : []);
+      ma5Series.setData(indicatorState.ma5 ? displayMa5 : []);
+      ma20Series.setData(indicatorState.ma20 ? displayMa20 : []);
+      ma60Series.setData(indicatorState.ma60 ? displayMa60 : []);
+      bbUpperSeries.setData(indicatorState.bb ? displayBbUp : []);
+      bbLowerSeries.setData(indicatorState.bb ? displayBbLow : []);
 
       // Draw 3 Strategic Lines (Target, Base, Stop)
       if (targetPriceLine) candleSeries.removePriceLine(targetPriceLine);
@@ -1250,7 +1434,6 @@
       const targetP = stock.targetPrice || Math.round(stock.basePrice * 1.08);
       const stopP = stock.stopPrice || Math.round(stock.basePrice * 0.96);
 
-      // 1. Target Line
       targetPriceLine = candleSeries.createPriceLine({
         price: targetP,
         color: '#10b981',
@@ -1260,7 +1443,6 @@
         title: '🎯 익절 목표',
       });
 
-      // 2. Base Line
       basePriceLine = candleSeries.createPriceLine({
         price: stock.basePrice,
         color: '#f59e0b',
@@ -1270,7 +1452,6 @@
         title: '⭐ 기준 매수',
       });
 
-      // 3. Stop Line
       stopPriceLine = candleSeries.createPriceLine({
         price: stopP,
         color: '#3b82f6',
@@ -1280,9 +1461,8 @@
         title: '🛑 손절 방어',
       });
 
-      // Update Legend initial value
-      if (data.candles.length > 0) {
-        const last = data.candles[data.candles.length - 1];
+      if (displayCandles.length > 0) {
+        const last = displayCandles[displayCandles.length - 1];
         document.getElementById("legDate").innerText = last.time;
         document.getElementById("legOpen").innerText = Number(last.open).toLocaleString();
         document.getElementById("legHigh").innerText = Number(last.high).toLocaleString();
@@ -1294,15 +1474,41 @@
       lwChart.timeScale().fitContent();
     }
 
-    // Time Range Switcher (1M, 3M, 6M, 1Y)
+    // Timeframe Switcher (일봉, 주봉, 월봉, 전체)
+    function setTimeframe(tf) {
+      currentTimeframe = tf;
+      ["Day", "Week", "Month", "All"].forEach(t => {
+        const btn = document.getElementById(`tf${t}`);
+        if (btn) {
+          if (t.toLowerCase() === tf.toLowerCase()) {
+            btn.className = "px-2.5 py-1 rounded bg-amber-500 text-black font-bold transition";
+          } else {
+            btn.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white transition";
+          }
+        }
+      });
+
+      if (tf === 'all') {
+        currentCandleDays = 0;
+        setCandleRange(0);
+      } else {
+        const stock = watchlistData.find(s => s.code === currentSelectedCode);
+        if (stock) renderStockToLightweightChart(stock);
+      }
+    }
+
+    // Range Switcher (30, 60, 120, 250, 0 = All)
     function setCandleRange(days) {
       currentCandleDays = days;
-      [30, 60, 120, 250].forEach(d => {
-        const btn = document.getElementById(`range${d}`);
+      [30, 60, 120, 250, 0].forEach(d => {
+        const id = d === 0 ? "rangeAll" : `range${d}`;
+        const btn = document.getElementById(id);
         if (btn) {
-          btn.className = (d === days)
-            ? "px-2.5 py-1 rounded bg-amber-500 text-black font-bold transition"
-            : "px-2.5 py-1 rounded text-slate-400 hover:text-white transition";
+          if (d === days) {
+            btn.className = "px-2 py-1 rounded bg-slate-700 text-white font-bold transition";
+          } else {
+            btn.className = "px-2 py-1 rounded text-slate-400 hover:text-white transition";
+          }
         }
       });
       const stock = watchlistData.find(s => s.code === currentSelectedCode);
@@ -1335,7 +1541,7 @@
       showToast(`'${type.toUpperCase()}' 보조지표가 ${isChecked ? '활성화' : '숨김'}되었습니다.`);
     }
 
-    // Interactive Strategic Stepper Adjustment
+    // Strategic Price Steppers
     function adjustStrategyPrice(field, delta) {
       const stock = watchlistData.find(s => s.code === currentSelectedCode);
       if (!stock) return;
@@ -1352,18 +1558,17 @@
       selectStock(stock.code);
     }
 
-    // ==================== KRX SEARCH AUTOCOMPLETE ====================
+    // ==================== SEARCH & ADD STOCK MODAL ====================
     function openSearchModal() {
       document.getElementById("searchModal").classList.remove("hidden");
       document.getElementById("krxSearchInput").focus();
-      document.getElementById("targetSetupForm").classList.add("hidden");
-      handleKrxSearch("");
+      filterKrxCandidates("");
     }
     function closeSearchModal() {
       document.getElementById("searchModal").classList.add("hidden");
     }
 
-    function handleKrxSearch(keyword) {
+    function filterKrxCandidates(keyword) {
       const resultsContainer = document.getElementById("krxSearchResults");
       const kw = keyword.trim().toLowerCase();
 
@@ -1395,18 +1600,14 @@
         const sign = (item.change || 0) >= 0 ? "+" : "";
 
         row.innerHTML = `
-          <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-xs text-amber-400 border border-slate-700">
-              ${item.name.slice(0, 1)}
-            </div>
-            <div>
-              <div class="font-bold text-xs text-white">${item.name}</div>
-              <div class="text-[10px] text-slate-400 font-mono">${item.code} · ${item.market || 'KRX'}</div>
-            </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] px-1 py-0.5 rounded font-mono ${item.market === 'KOSDAQ' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-700 text-slate-300'}">${item.market || 'KRX'}</span>
+            <span class="font-bold text-white text-xs">${item.name}</span>
+            <span class="text-[11px] font-mono text-slate-400">${item.code}</span>
           </div>
-          <div class="text-right">
-            <div class="font-mono font-bold text-xs text-slate-200">${Number(item.price || item.currentPrice || 50000).toLocaleString()}원</div>
-            <div class="font-mono text-[10px] ${changeColor}">${sign}${item.change || item.changeRate || 0}%</div>
+          <div class="text-right font-mono text-xs">
+            <span class="font-bold text-slate-200">${Number(item.price || item.currentPrice || 0).toLocaleString()}원</span>
+            <span class="ml-1.5 ${changeColor}">${sign}${item.change || item.changeRate || 0}%</span>
           </div>
         `;
         resultsContainer.appendChild(row);
@@ -1415,17 +1616,13 @@
 
     function selectKrxItemForSetup(item) {
       selectedKrxItem = item;
-      const form = document.getElementById("targetSetupForm");
-      form.classList.remove("hidden");
+      document.getElementById("stepSetupConditions").classList.remove("hidden");
+      document.getElementById("selectedStockTitle").innerText = `${item.name} (${item.code})`;
 
-      const currentPrice = Number(item.price || item.currentPrice || 50000);
-      document.getElementById("formStockName").innerText = item.name;
-      document.getElementById("formStockCode").innerText = item.code;
-      document.getElementById("formCurrentPrice").innerText = `${currentPrice.toLocaleString()}원`;
-
-      document.getElementById("formBasePrice").value = Math.round(currentPrice * 0.985);
-      document.getElementById("formTargetPrice").value = Math.round(currentPrice * 1.08);
-      document.getElementById("formStopPrice").value = Math.round(currentPrice * 0.95);
+      const curPrice = Number(item.price || item.currentPrice || 50000);
+      document.getElementById("formBasePrice").value = curPrice;
+      document.getElementById("formTargetPrice").value = Math.round(curPrice * 1.08);
+      document.getElementById("formStopPrice").value = Math.round(curPrice * 0.96);
     }
 
     function confirmAddStock() {
@@ -1516,42 +1713,44 @@
       }
     }
 
-    // ==================== GOOGLE SHEET SYNC ====================
+    // ==================== GOOGLE SHEET SYNC (USER TRIGGERED ONLY) ====================
     function openSheetModal() {
       document.getElementById("sheetModal").classList.remove("hidden");
     }
     function closeSheetModal() {
       document.getElementById("sheetModal").classList.add("hidden");
     }
+
     function saveAndSyncSheet() {
       const url = document.getElementById("sheetUrlInput").value.trim();
       if (url) localStorage.setItem('signalstock_sheet_url', url);
       closeSheetModal();
-      triggerSheetSync();
+      triggerSheetSync(true); // User explicitly clicked button
     }
 
-    async function triggerSheetSync() {
+    async function triggerSheetSync(isManual = false) {
       const url = document.getElementById("sheetUrlInput").value.trim() || localStorage.getItem('signalstock_sheet_url');
       const timeElem = document.getElementById("sheetSyncTime");
       const icon = document.getElementById("syncIcon");
 
       if (!url) {
-        showToast("연동할 구글 시트 URL을 먼저 입력해 주세요.", "ALERT");
-        openSheetModal();
+        if (isManual) {
+          showToast("연동된 구글 시트 URL이 없습니다. [구글 시트 연동 설정] 버튼을 클릭해 등록해 주세요.", "ALERT");
+        }
         return;
       }
 
       const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
       if (!match) {
-        showToast("유효한 구글 스프레드시트 링크가 아닙니다.", "ALERT");
+        if (isManual) showToast("유효한 구글 스프레드시트 링크가 아닙니다.", "ALERT");
         return;
       }
 
       const sheetId = match[1];
       const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
 
-      timeElem.innerText = "동기화 중...";
-      icon.className = "inline-block animate-spin";
+      if (timeElem) timeElem.innerText = "동기화 중...";
+      if (icon) icon.className = "inline-block animate-spin";
 
       try {
         const response = await fetch(gvizUrl);
@@ -1561,14 +1760,14 @@
 
         const now = new Date();
         const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        timeElem.innerText = `${timeStr} 갱신됨`;
-        showToast(`구글 시트에서 최신 ${watchlistData.length}개 종목을 동기화했습니다!`);
+        if (timeElem) timeElem.innerText = `${timeStr} 갱신됨`;
+        showToast(`구글 시트에서 최신 ${watchlistData.length}개 종목을 성공적으로 가져왔습니다!`);
       } catch (err) {
         console.warn("Sheet fetch error:", err);
-        timeElem.innerText = "연동 확인 필요";
-        showToast("구글 시트 공유 권한을 '링크가 있는 모든 사용자(뷰어)'로 설정했는지 확인해 주세요.", "ALERT");
+        if (timeElem) timeElem.innerText = "연동 확인 필요";
+        if (isManual) showToast("구글 시트 공유 권한을 '링크가 있는 모든 사용자(뷰어)'로 설정했는지 확인해 주세요.", "ALERT");
       } finally {
-        icon.className = "inline-block";
+        if (icon) icon.className = "inline-block";
       }
     }
 
@@ -1649,20 +1848,16 @@
       return r;
     }
 
-    function setupAutoSync() {
-      if (autoSyncTimer) clearInterval(autoSyncTimer);
-      autoSyncTimer = setInterval(() => {
-        const toggle = document.getElementById("autoSyncToggle");
-        if (toggle && toggle.checked) triggerSheetSync();
-      }, 30000);
-    }
-
     function toggleAutoSync(enabled) {
       if (enabled) {
-        setupAutoSync();
+        if (autoSyncTimer) clearInterval(autoSyncTimer);
+        autoSyncTimer = setInterval(() => {
+          const toggle = document.getElementById("autoSyncToggle");
+          if (toggle && toggle.checked) triggerSheetSync(false);
+        }, 30000);
         showToast("30초 자동 동기화가 활성화되었습니다.");
       } else {
-        clearInterval(autoSyncTimer);
+        if (autoSyncTimer) clearInterval(autoSyncTimer);
         showToast("자동 동기화가 꺼졌습니다.");
       }
     }
@@ -1696,98 +1891,115 @@
     function switchMainTab(tab) {
       const viewWatchlist = document.getElementById("viewWatchlist");
       const viewScreener = document.getElementById("viewScreener");
-      const navWatch = document.getElementById("navWatchlistBtn");
-      const navScreen = document.getElementById("navScreenerBtn");
+      const tabWatchlist = document.getElementById("tabWatchlist");
+      const tabScreener = document.getElementById("tabScreener");
 
-      if (tab === "watchlist") {
+      if (tab === 'watchlist') {
         viewWatchlist.classList.remove("hidden");
         viewScreener.classList.add("hidden");
-        navWatch.className = "px-3 py-1.5 rounded-md text-xs font-semibold transition-all bg-[#1e293b] text-white shadow-sm flex items-center gap-1.5";
-        navScreen.className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-1.5";
-        selectStock(currentSelectedCode);
+        tabWatchlist.className = "px-4 py-2 font-bold text-amber-400 border-b-2 border-amber-400 text-xs flex items-center gap-1.5 transition";
+        tabScreener.className = "px-4 py-2 text-slate-400 hover:text-white text-xs flex items-center gap-1.5 transition";
+        if (lwChart) setTimeout(() => lwChart.timeScale().fitContent(), 50);
       } else {
         viewWatchlist.classList.add("hidden");
         viewScreener.classList.remove("hidden");
-        navWatch.className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-1.5";
-        navScreen.className = "px-3 py-1.5 rounded-md text-xs font-semibold transition-all bg-[#1e293b] text-white shadow-sm flex items-center gap-1.5";
-        renderScreenerTable(screenerData);
+        tabWatchlist.className = "px-4 py-2 text-slate-400 hover:text-white text-xs flex items-center gap-1.5 transition";
+        tabScreener.className = "px-4 py-2 font-bold text-amber-400 border-b-2 border-amber-400 text-xs flex items-center gap-1.5 transition";
+        renderScreenerCards();
       }
     }
 
-    function renderScreenerTable(data) {
-      const tbody = document.getElementById("screenerTableBody");
-      document.getElementById("screenerCount").innerText = data.length;
-      tbody.innerHTML = "";
+    function renderScreenerCards() {
+      const container = document.getElementById("screenerGrid");
+      if (!container) return;
+      container.innerHTML = "";
 
-      data.forEach(item => {
-        const isAlreadyAdded = watchlistData.some(w => w.code === item.code);
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-800/40 transition";
-        tr.innerHTML = `
-          <td class="px-6 py-3.5">
-            <div class="font-bold text-white text-xs">${item.name}</div>
-            <div class="font-mono text-[10px] text-slate-400">${item.code}</div>
-          </td>
-          <td class="px-4 py-3.5">
-            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">${item.strategyLabel}</span>
-            <p class="text-[10px] text-slate-400 mt-0.5">${item.reason}</p>
-          </td>
-          <td class="px-4 py-3.5">
-            <div class="font-mono font-bold text-rose-400">${Number(item.currentPrice).toLocaleString()}원</div>
-            <div class="font-mono text-[10px] text-rose-500">+${item.changeRate}% ▲</div>
-          </td>
-          <td class="px-4 py-3.5 font-mono text-slate-300">${item.volumeWon}</td>
-          <td class="px-4 py-3.5 text-[11px]">
-            <div class="text-rose-400">${item.foreignSupply}</div>
-            <div class="text-emerald-400">${item.instSupply}</div>
-          </td>
-          <td class="px-4 py-3.5 font-mono font-bold text-amber-400">
-            ${Number(item.recommendedBase).toLocaleString()}원
-          </td>
-          <td class="px-6 py-3.5 text-right">
-            ${
-              isAlreadyAdded 
-                ? `<span class="px-3 py-1 bg-slate-800 text-slate-500 rounded-lg text-xs font-medium cursor-not-allowed">✓ 감시 중</span>`
-                : `<button onclick="addToWatchlistFromScreener('${item.code}')" class="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg text-xs transition shadow flex items-center gap-1 ml-auto">
-                    <span>+ 내 시트에 추가</span>
-                   </button>`
-            }
-          </td>
+      screenerData.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "bg-[#1e293b] rounded-2xl border border-[#334155] p-5 shadow-xl flex flex-col justify-between hover:border-amber-500/60 transition";
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <span class="text-[10px] font-mono text-slate-400">${item.code}</span>
+                <h4 class="text-base font-bold text-white">${item.name}</h4>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                ${item.strategyLabel}
+              </span>
+            </div>
+
+            <div class="flex items-baseline justify-between mb-4">
+              <span class="text-lg font-mono font-bold text-slate-100">${Number(item.currentPrice).toLocaleString()}원</span>
+              <span class="text-xs font-mono font-bold ${item.changeRate >= 0 ? 'text-rose-400' : 'text-blue-400'}">
+                ${item.changeRate >= 0 ? '+' : ''}${item.changeRate}%
+              </span>
+            </div>
+
+            <p class="text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800 mb-4 leading-relaxed">
+              💡 ${item.reason}
+            </p>
+
+            <div class="grid grid-cols-3 gap-2 text-center text-xs py-2 border-t border-b border-slate-800 font-mono mb-4">
+              <div>
+                <span class="text-[10px] text-slate-400 block">추천 기준가</span>
+                <span class="text-amber-300 font-bold">${Number(item.recommendedBase).toLocaleString()}</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 block">목표가</span>
+                <span class="text-emerald-400 font-bold">${Number(item.recommendedTarget).toLocaleString()}</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 block">손절가</span>
+                <span class="text-blue-400 font-bold">${Number(item.recommendedStop).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <span class="text-[10px] text-slate-400">${item.foreignSupply}</span>
+            <button onclick="addScreenerToWatchlist('${item.code}')" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-xs rounded-lg transition shadow flex items-center gap-1">
+              <span>+ 내 감시목록 등록</span>
+            </button>
+          </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(card);
       });
     }
 
-    function addToWatchlistFromScreener(code) {
-      const item = screenerData.find(s => s.code === code);
-      if (!item) return;
+    function addScreenerToWatchlist(code) {
+      const cand = screenerData.find(s => s.code === code);
+      if (!cand) return;
 
       const newStock = {
-        code: item.code,
-        name: item.name,
-        market: "KOSPI",
-        currentPrice: item.currentPrice,
-        changeRate: item.changeRate,
-        basePrice: item.recommendedBase,
-        targetPrice: item.recommendedTarget,
-        stopPrice: item.recommendedStop,
+        code: cand.code,
+        name: cand.name,
+        market: "KRX",
+        currentPrice: cand.currentPrice,
+        changeRate: cand.changeRate,
+        basePrice: cand.recommendedBase,
+        targetPrice: cand.recommendedTarget,
+        stopPrice: cand.recommendedStop,
         type: "매수",
-        strategy: item.strategyLabel,
-        memo: `[조건 발굴 편입] ${item.reason}`,
+        strategy: cand.strategyLabel,
+        memo: cand.reason,
         tolerance: 1.5,
-        foreign: item.foreignSupply,
-        institution: item.instSupply,
-        volumeWon: item.volumeWon,
-        rrRatio: "1 : 2.8"
+        foreign: cand.foreignSupply,
+        institution: cand.instSupply,
+        volumeWon: cand.volumeWon
       };
 
-      watchlistData.unshift(newStock);
+      const existingIdx = watchlistData.findIndex(s => s.code === code);
+      if (existingIdx >= 0) {
+        watchlistData[existingIdx] = newStock;
+      } else {
+        watchlistData.unshift(newStock);
+      }
+
       saveWatchlistToLocal();
-      showToast(`⭐ [${item.name}] 종목이 감시 리스트에 추가되었습니다!`);
-      renderScreenerTable(screenerData);
-      renderWatchlist();
+      showToast(`🎯 [${cand.name}] 발굴 종목이 감시 리스트에 추가되었습니다!`);
       switchMainTab('watchlist');
-      selectStock(newStock.code);
+      selectStock(code);
     }
 
     // ==================== PRICE TICK SIMULATION & AUDIO ====================
@@ -1812,10 +2024,10 @@
     function startSimulation() {
       clearInterval(simInterval);
       simInterval = setInterval(() => {
-        if (watchlistData.length === 0) return;
+        if (!isSimulating || watchlistData.length === 0) return;
         const randomIdx = Math.floor(Math.random() * watchlistData.length);
         const stock = watchlistData[randomIdx];
-        const tickDelta = (Math.random() - 0.48) * (stock.basePrice * 0.003);
+        const tickDelta = (Math.random() - 0.48) * (stock.basePrice * 0.002);
         const oldStatus = getStockStatus(stock).status;
 
         stock.currentPrice = Math.round(stock.currentPrice + tickDelta);
@@ -1827,12 +2039,25 @@
           showToast(`🎯 [도달 알림] ${stock.name}(${stock.code}) 기준 매수가(${Number(stock.basePrice).toLocaleString()}원)에 도달했습니다!`, "ALERT");
         }
 
+        // Calmly update numbers without disrupting chart zoom/pan
         if (stock.code === currentSelectedCode) {
-          selectStock(stock.code);
-        } else {
-          renderWatchlist();
+          document.getElementById("detailCurrentPrice").innerText = Number(stock.currentPrice).toLocaleString();
+          const gapPercent = ((stock.currentPrice - stock.basePrice) / stock.basePrice) * 100;
+          const reachProgress = Math.max(10, Math.min(100, Math.round(100 - Math.abs(gapPercent) * 5)));
+          document.getElementById("reachGaugeBar").style.width = `${reachProgress}%`;
+          document.getElementById("reachPercentText").innerText = `${reachProgress}%`;
+          const gapDiff = stock.currentPrice - stock.basePrice;
+          const gapSign = gapDiff >= 0 ? "+" : "";
+          document.getElementById("reachGapWon").innerText = `${gapSign}${Number(gapDiff).toLocaleString()}원 (${gapSign}${gapPercent.toFixed(1)}%)`;
+
+          const info = getStockStatus(stock);
+          const badgeElem = document.getElementById("detailStatusBadge");
+          badgeElem.className = `text-xs font-bold px-3 py-1 rounded-full ${info.badgeClass}`;
+          badgeElem.innerText = info.badgeText;
         }
-      }, 3500);
+
+        renderWatchlist();
+      }, 3000);
     }
 
     function playAlertChime() {
@@ -1840,67 +2065,47 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.3);
+        osc.stop(audioCtx.currentTime + 0.6);
       } catch (e) {
-        console.warn("Audio error:", e);
+        console.warn("Audio play failed:", e);
       }
     }
 
-    function testNotificationSound() {
-      playAlertChime();
-      showToast("🔊 기준가 도달 알림 사운드가 정상 재생되었습니다.");
-    }
-
-    function setStatusFilter(filter) {
-      currentStatusFilter = filter;
-      const ids = { ALL: "fltAll", REACHED: "fltReached", NEAR: "fltNear", WAIT: "fltWait" };
-      Object.keys(ids).forEach(key => {
-        const btn = document.getElementById(ids[key]);
-        if (key === filter) {
-          btn.className = "px-2 py-1 rounded text-[11px] font-semibold bg-amber-500 text-black";
-        } else {
-          btn.className = "px-2 py-1 rounded text-[11px] text-slate-400 hover:text-white";
-        }
-      });
-      renderWatchlist();
-    }
-
-    function showToast(message, type = "INFO") {
+    // ==================== TOAST NOTIFICATIONS ====================
+    function showToast(msg, type = "INFO") {
       const container = document.getElementById("toastContainer");
+      if (!container) return;
+
       const toast = document.createElement("div");
-      const isAlert = type === "ALERT";
-      toast.className = `p-3 rounded-xl border shadow-2xl text-xs font-medium flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto ${
-        isAlert 
-          ? "bg-rose-950/95 border-rose-500 text-rose-200" 
-          : "bg-slate-900/95 border-slate-700 text-slate-100"
+      toast.className = `pointer-events-auto p-3.5 rounded-xl shadow-2xl border text-xs text-white max-w-sm transition-all transform duration-300 translate-y-2 opacity-0 flex items-start gap-2.5 ${
+        type === "ALERT" 
+          ? "bg-rose-950/90 border-rose-500 shadow-rose-950/50" 
+          : "bg-slate-900/90 border-amber-500/60 shadow-black/60"
       }`;
-      toast.innerHTML = `<span>${isAlert ? '🚨' : '✨'}</span><span>${message}</span>`;
+
+      toast.innerHTML = `
+        <span class="text-base">${type === 'ALERT' ? '🚨' : '✨'}</span>
+        <div class="flex-1 font-sans leading-relaxed">${msg}</div>
+      `;
+
       container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove("translate-y-2", "opacity-0");
+      });
 
-      setTimeout(() => toast.classList.remove("translate-y-2", "opacity-0"), 10);
       setTimeout(() => {
-        toast.classList.add("translate-y-2", "opacity-0");
+        toast.classList.add("opacity-0", "translate-y-2");
         setTimeout(() => toast.remove(), 300);
-      }, 3500);
+      }, 4000);
     }
-
-    // Window Resize Responsive
-    window.addEventListener("resize", () => {
-      const container = document.getElementById("chartContainer");
-      if (lwChart && container) {
-        lwChart.applyOptions({ width: container.clientWidth });
-      }
-    });
-
-    window.addEventListener("DOMContentLoaded", initApp);
   </script>
 </body>
 </html>
